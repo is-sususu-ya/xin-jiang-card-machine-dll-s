@@ -1,6 +1,9 @@
 *.so
 *swp
 *.tags
+*.a
+*.so
+
 *.db
 *db
 Debug*
