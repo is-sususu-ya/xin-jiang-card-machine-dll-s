@@ -2309,8 +2309,7 @@ RetryConnect:
 					nSkip = 0;
 				}
 				continue;
-			} 
-			printf("nSKIP:%d\r\n", nSkip ); 
+			}  
 			if ( nSkip )
 			{
 				skipBuf[nSkip] = '\0';
