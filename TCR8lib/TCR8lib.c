@@ -2282,7 +2282,7 @@ RetryConnect:
 #ifdef linux
 				rlen = _IsConnectWithCom(h) ? tty_read_until( h->m_tty, buf+1, sizeof(buf)-2, MSG_ETX ) : sock_read_until( h->m_sockTCP, buf+1, sizeof(buf)-2, MSG_ETX);
 #else
-				rlen = _IsConnectWithCom(h) ? tty_gets( h->m_tty, buf+1, sizeof(buf)-2, MSG_ETX ) : sock_read_line( h->m_sockTCP, buf+1, sizeof(buf)-2, MSG_ETX);
+				rlen = _IsConnectWithCom(h) ? tty_gets( h->m_tty, buf+1, sizeof(buf)-2, MSG_ETX ) : sock_read_until( h->m_sockTCP, buf+1, sizeof(buf)-2, MSG_ETX);
 #endif
 				rlen++;
 			}
