@@ -146,12 +146,14 @@
   <ItemGroup>
     <ClCompile Include="..\common\winnet.c" />
     <ClCompile Include="..\common\wintty.c" />
-    <ClCompile Include="TCR8lib.c" />
+    <ClCompile Include="..\TCR8lib\TCR8lib.c" />
+    <ClCompile Include="TCR8SendCard.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\winnet.h" />
     <ClInclude Include="..\common\wintty.h" />
-    <ClInclude Include="TCR8lib.h" />
+    <ClInclude Include="..\TCR8lib\TCR8lib.h" />
+    <ClInclude Include="TCR8SendCard.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

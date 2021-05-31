@@ -15,24 +15,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TCR8lib.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\winnet.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\common\wintty.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="TCR8SendCard.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TCR8lib\TCR8lib.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TCR8lib.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\winnet.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\common\wintty.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TCR8SendCard.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\TCR8lib\TCR8lib.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
