@@ -9,10 +9,13 @@ do
 	cd $list
 	make 
 	cp ./lib*.so $release_dir
+	cp ./*.h $release_dir
 	cp *.pdf $release_dir
 	cp LinuxDemo* -rf $release_dir
 	make cc
 done 
 
+cd $root_dir
+cp ./utils/wintype.h $release_dir
 
 
