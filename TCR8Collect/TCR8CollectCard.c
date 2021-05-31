@@ -2,13 +2,14 @@
 #include "../TCR8lib/TCR8lib.h"
 #include "TCR8CollectCard.h"
 
-#define TCR8LOG_DEFAULT_PATH	"D:/rwlog/RunwellTCR8CDll.log"
+#define TCR8LOG_DEFAULT_PATH	"./RunwellTCR8CDll.log"
 
 typedef struct tagTCR8UserData {
 #ifndef linux
 	HWND	hWnd;
 	UINT	Msg;
 #endif
+	ACCEventHandle fxc_acc;
 	char    TxData[64];
 	char    RxData[32];
 	char    TCR8Log[256];
@@ -18,39 +19,40 @@ typedef struct tagTCR8UserData {
    
 TCR8HANDLE   m_hTCR8 = NULL;
 TCR8UserData m_TCR8UserData;
- 
 
 static void ACC_EventHandle( void *hMachine, int nEventId, int nParam )
 {
 	TCR8HANDLE hTCR8 = (TCR8HANDLE)hMachine;
-	TCR8UserData *pUserData = (TCR8UserData *)hTCR8->m_pUsrData;
-
+	TCR8UserData *pUserData = (TCR8UserData *)hTCR8->m_pUsrData; 
 	if( (void *)nParam != NULL )
 	{
-		int len;
-
+		int len; 
 		switch(nEventId)
 		{
 		case EVID_TX:
 			len = strlen( (char *)nParam );
 			memcpy( pUserData->TxData, (char *)nParam, len+1 );
-			break;
-
+			break; 
 		case EVID_RX:
 			len = strlen( (char *)nParam );
 			memcpy( pUserData->RxData, (char *)nParam, len+1 );
-			break;
-
+			break; 
 		case EVID_KERNELLOG:
 			len = strlen( (char *)nParam );
 			memcpy( pUserData->TCR8Log, (char *)nParam, len+1 );
 			break;
 		}
-	}
-
+	} 
 #ifndef linux
 	PostMessage( pUserData->hWnd, pUserData->Msg, nEventId, nParam );
 #endif
+	if( m_TCR8UserData.fxc_acc )
+		m_TCR8UserData.fxc_acc( nEventId, nParam );
+}
+
+DLLAPI BOOL CALLTYPE ACC_SetEventCallBack(ACCEventHandle cb)
+{
+	m_TCR8UserData.fxc_acc = cb;
 }
   
 #ifndef linux
@@ -61,7 +63,11 @@ DLLAPI void CALLTYPE ACC_SetEventMessage(HWND hWnd, UINT MsgNum)
 }
 #endif
 
+#ifndef linux
 DLLAPI BOOL CALLTYPE ACC_OpenDevice(int nCOM, int nBaudRate)
+#else
+DLLAPI BOOL CALLTYPE ACC_OpenDevice(const char *ttyName, int nBaudRate)
+#endif
 {
 	DWORD dwEventMask;
 
@@ -77,7 +83,11 @@ DLLAPI BOOL CALLTYPE ACC_OpenDevice(int nCOM, int nBaudRate)
 
 	// enable TCR8 log
 	TCR8_EnableLog( m_hTCR8, TCR8LOG_DEFAULT_PATH );
+#ifndef linux
 	TCR8_Log( m_hTCR8, "【上位机调用】ACC_OpenDevice() nCOM = %d, nBaudRate = %d.\n", nCOM, nBaudRate );
+#else  
+	TCR8_Log( m_hTCR8, "【上位机调用】ACC_OpenDevice() COM = %s, nBaudRate = %d.\n", ttyName, nBaudRate );
+#endif
 	TCR8_Log( m_hTCR8, "\tVersion %s\n", STRING_DLL_VRESION );
 
 	// set user data and callback function
@@ -89,8 +99,12 @@ DLLAPI BOOL CALLTYPE ACC_OpenDevice(int nCOM, int nBaudRate)
 	_SetEventMask( m_hTCR8, dwEventMask );
 	TCR8_SetCallback( m_hTCR8, ACC_EventHandle );
 
+#ifndef linux
 	// set COM parameter
 	TCR8_SetComPort( m_hTCR8, nCOM, nBaudRate );
+#else
+	TCR8_SetComPort( m_hTCR8, ttyName, nBaudRate );
+#endif
 	
 	// open TCR8 device
 	if( !TCR8_OpenDevice( m_hTCR8 ) )
@@ -104,8 +118,7 @@ DLLAPI BOOL CALLTYPE ACC_OpenDevice(int nCOM, int nBaudRate)
 		TCR8_Log( m_hTCR8, "[Error] -TCR8_Run- fail!.\n" );
 		TCR8_Destroy( m_hTCR8 );
 		return FALSE;
-	}
-
+	} 
 	return TRUE;
 }
 
@@ -169,8 +182,7 @@ DLLAPI BOOL CALLTYPE ACC_GetFirmwareVer(DWORD *ver)
 	{
 		*ver = _GetKernelVersion( m_hTCR8 );
 		return TRUE;
-	}
-
+	} 
 	return FALSE;
 }
 
@@ -188,18 +200,10 @@ DLLAPI BOOL CALLTYPE ACC_GetBoxSN(int nChannel, DWORD *dwSN)
 	{
 		*dwSN = _GetCartridgeSN( m_hTCR8, (nChannel - 1) );
 		return TRUE;
-	}
-
+	} 
 	return FALSE;
 }
-
-/*
-BOOL CALLTYPE ACC_SetCartridgeInfo(int nChannel, DWORD dwSN, int nCount)
-{
-	return TCR8_SetCartridgeInfo( m_hTCR8, nChannel, dwSN, nCount );
-}
-*/
-
+ 
 DLLAPI BOOL CALLTYPE ACC_SetCardCounter(int nChannel, int nCount)
 {
 	DWORD dwSN = 0;
@@ -227,8 +231,7 @@ DLLAPI BOOL CALLTYPE ACC_GetCardCounter(int nChannel, int *nCount)
 }
 
 DLLAPI BOOL CALLTYPE ACC_GetChannelState(int nChannel, int *nState)
-{
-	/*TCR8_Log( m_hTCR8, "【上位机调用】 ACC_GetChannelState() nChannel = %d, nState = %d\n", nChannel, nState );*/
+{ 
 	if( (0 < nChannel && nChannel < 5) && (nState != NULL) )
 	{
 		*nState = _GetChannelState( m_hTCR8, (nChannel-1) );
@@ -237,8 +240,7 @@ DLLAPI BOOL CALLTYPE ACC_GetChannelState(int nChannel, int *nState)
 	else
 	{
 		TCR8_Log( m_hTCR8, "【上位机调用】 ACC_GetChannelState() nChannel = %d, nState = %d\n", nChannel, nState );
-	}
-
+	} 
 	return FALSE;
 }
 
@@ -253,3 +255,54 @@ DLLAPI BOOL CALLTYPE ACC_IsBoxLoad(int nChannel)
 	return FALSE;
 }
  
+DLLAPI int	CALLTYPE ACC_GetTxData( char *buf, int size )
+{
+	int len = 0;
+	TCR8UserData *pUserData = (TCR8UserData *)m_hTCR8->m_pUsrData; 
+	TCR8_Log( m_hTCR8, "【上位机调用】 ACC_GetTxData() buf = %p, size = %d\n", buf, size ); 
+	if( buf == NULL )
+		return 0; 
+	len = strlen( pUserData->TxData );
+	if( len > 0 )
+	{
+		if ( len > size )
+			len = size;
+		strncpy( buf, pUserData->TxData, size );
+	} 
+	return len;
+}
+
+DLLAPI int	CALLTYPE ACC_GetRxData( char *buf, int size )
+{
+	int len = 0;
+	TCR8UserData *pUserData = (TCR8UserData *)m_hTCR8->m_pUsrData; 
+	TCR8_Log( m_hTCR8, "【上位机调用】 ACC_GetRxData() buf = %p, size = %d\n", buf, size ); 
+	if( buf == NULL )
+		return 0; 
+	len = strlen( pUserData->RxData );
+	if( len > 0 )
+	{
+		if ( len > size )
+			len = size;
+		strncpy( buf, pUserData->RxData, size );
+	} 
+	return len;
+}
+ 
+DLLAPI int CALLTYPE ACC_GetKernelLog( char *buf, int size )
+{
+	int len = 0;
+	TCR8UserData *pUserData = (TCR8UserData *)m_hTCR8->m_pUsrData; 
+	TCR8_Log( m_hTCR8, "【上位机调用】 ACC_GetKernelLog() buf = %p, size = %d\n", buf, size ); 
+	if( buf == NULL )
+		return 0; 
+	len = strlen( pUserData->TCR8Log );
+	if( len > 0 )
+	{
+		if ( len > size )
+			len = size;
+		strncpy( buf, pUserData->TCR8Log, size );
+	}
+
+	return len;
+}

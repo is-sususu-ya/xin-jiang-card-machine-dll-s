@@ -3,7 +3,7 @@
 #include "../TCR8lib/TCR8lib.h" 
 #include "TCR8SendCard.h"
 
-#define TCR8LOG_DEFAULT_PATH	"D:/rwlog/RunwellTCR8Dll.log"
+#define TCR8LOG_DEFAULT_PATH	"./RunwellTCR8Dll.log"
 
 #undef MAX_PATH
 #define MAX_PATH 256
@@ -70,15 +70,13 @@ static void ACM_EventHandle( void *hMachine, int nEventId, int nParam )
 		TCR8_Log( hTCR8, "PostMessage() hWnd = %p, Msg = %d, wParam(nEventId) = %d, lParam(nParam) = %d\n", m_TCR8UserData.hWnd, m_TCR8UserData.Msg, nEventId, nParam );
 		PostMessage( pUserData->hWnd, pUserData->Msg, nEventId, nParam );
 	}
-#endif
-	
+#endif 
 	if( m_TCR8UserData.pEventCB != NULL )
 	{
 		TCR8_Log( hTCR8, "【Note】 调用用户注册的卡机事件回调函数( nEventId = %d, nEventParam = %d)\n", nEventId, nParam );
 		m_TCR8UserData.pEventCB( nEventId, nParam );
 		TCR8_Log( hTCR8, "【Note】 从用户注册的卡机事件回调函数返回\n");
-	}
-	
+	} 
 }
  
 #ifndef linux
@@ -94,16 +92,21 @@ DLLAPI void CALLTYPE ACM_SetEventCallBackFunc(ACM_EventCallBack cb)
 	m_TCR8UserData.pEventCB = cb;
 }
 
+#ifndef linux
 DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate)
+#else
+DLLAPI BOOL CALLTYPE ACM_OpenDevice(const char *ttyDev, int nBaudRate)
+#endif
 {
 	FILE *fp = NULL;
-#ifndef linux
-	HMODULE hDll;
-#endif
 	char chDllPath[256];
 	char drive[64];
-	char dir[256];
-
+	char dir[256]; 
+#ifndef linux
+	HMODULE hDll;
+#else
+	printf("input :%s %d \r\n", ttyDev, nBaudRate );
+#endif
 	if( m_hTCR8 != NULL )
 	{
 		TCR8_Log( m_hTCR8, "【上位机重复调用】 ACM_OpenDevice()，先关闭上次打开的设备!\n" );
@@ -113,12 +116,15 @@ DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate)
 
 	if( m_hTCR8 == NULL )
 		return FALSE;
-
-	// enable TCR8 log
+ 
 	TCR8_EnableLog( m_hTCR8, TCR8LOG_DEFAULT_PATH );
+#ifndef linux
 	TCR8_Log( m_hTCR8, "【上位机调用】ACM_OpenDevice() nCOM = %d, nBaudRate = %d.\n", nCOM, nBaudRate );
+#else
+	TCR8_Log( m_hTCR8, "【上位机调用】ACM_OpenDevice() nCOM = %s, nBaudRate = %d.\n", ttyDev, nBaudRate );
+#endif
 	TCR8_Log( m_hTCR8, "\tVersion %s\n", STRING_DLL_VRESION );
-
+ 
 	m_TCR8UserData.bContainCardOnAnt = FALSE;
 	m_TCR8UserData.nStatusChange = 0;
 
@@ -178,14 +184,17 @@ DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate)
 	// TODO
 #endif
 	// set user data and callback function
-	//memset( &m_TCR8UserData, 0, sizeof(m_TCR8UserData) );
 	_SetUserData( m_hTCR8, &m_TCR8UserData );
 	_SetEventMask( m_hTCR8, (0xFFFF | EVM_THREADEXIT | EVM_PULLBACKOK | EVM_PULLBACKFAIL ) );
 
 	TCR8_SetCallback( m_hTCR8, ACM_EventHandle );
 
-	// set COM parameter
+	// set COM parameter 
+#ifndef linux
 	TCR8_SetComPort( m_hTCR8, nCOM, nBaudRate );
+#else
+	TCR8_SetComPort( m_hTCR8, ttyDev, nBaudRate );
+#endif
 	
 	// open TCR8 device
 	if( !TCR8_OpenDevice( m_hTCR8 ) )
@@ -401,8 +410,7 @@ DLLAPI int	CALLTYPE ACM_GetTxData( char *buf, int size )
 		if ( len > size )
 			len = size;
 		strncpy( buf, pUserData->TxData, size );
-	}
-
+	} 
 	return len;
 }
 
@@ -422,8 +430,7 @@ DLLAPI int	CALLTYPE ACM_GetRxData( char *buf, int size )
 		if ( len > size )
 			len = size;
 		strncpy( buf, pUserData->RxData, size );
-	}
-
+	} 
 	return len;
 }
 

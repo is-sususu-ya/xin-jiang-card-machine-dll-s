@@ -18,10 +18,15 @@
 extern "C" {
 #endif
 
+	typedef void (* CALLTYPE ACCEventHandle)(int a, int b);
+
 #ifndef linux
-	DLLAPI void CALLTYPE ACC_SetEventMessage(HWND hWnd, UINT MsgNum);
-#endif
 	DLLAPI BOOL CALLTYPE ACC_OpenDevice(int nCOM, int nBaudRate);
+	DLLAPI void CALLTYPE ACC_SetEventMessage(HWND hWnd, UINT MsgNum);
+#else 
+	DLLAPI BOOL CALLTYPE ACC_OpenDevice(const char *ttyName, int nBaudRate);
+#endif
+	DLLAPI BOOL CALLTYPE ACC_SetEventCallBack(ACCEventHandle cb);
 	DLLAPI BOOL CALLTYPE ACC_CloseDevice(void);
 	DLLAPI BOOL CALLTYPE ACC_CollectCard(void);
 	DLLAPI BOOL CALLTYPE ACC_RecycleCard(void);
@@ -36,17 +41,7 @@ extern "C" {
 	DLLAPI BOOL CALLTYPE ACC_SetCardCounter(int nChannel, int nCount);
 	DLLAPI BOOL CALLTYPE ACC_GetCardCounter(int nChannel, int *nCount);
 	DLLAPI BOOL CALLTYPE ACC_GetChannelState(int nChannel, int *nState);
-	DLLAPI BOOL CALLTYPE ACC_IsBoxLoad(int nChannel);  
-	DLLAPI BOOL CALLTYPE ACC_IssueCard(void); 
-	DLLAPI BOOL CALLTYPE ACC_Reject(void); 
-	DLLAPI BOOL CALLTYPE ACC_SwitchChannel(int nChannel);
-	DLLAPI BOOL CALLTYPE ACC_ForceEject(int nChannel); 
-	DLLAPI BOOL CALLTYPE ACC_SetCartridgeInfo(int nChannel, DWORD dwSN, int nCount); 
-	DLLAPI BOOL CALLTYPE ACC_GetActiveChannel(int nPosition, int *nActiveChannel);
- 
-	DLLAPI LPCTSTR CALLTYPE ACC_GetEventText(int nEventId, int nParam);
-	DLLAPI LPCTSTR CALLTYPE ACC_GetTransStateText(int st);
-	DLLAPI LPCTSTR CALLTYPE ACC_GetButtonIgnoreText(int code);
+	DLLAPI BOOL CALLTYPE ACC_IsBoxLoad(int nChannel);     
 	DLLAPI int	CALLTYPE ACC_GetTxData(char *buf, int size);
 	DLLAPI int	CALLTYPE ACC_GetRxData(char *buf, int size);
 	DLLAPI int CALLTYPE ACC_GetKernelLog(char *buf, int size);

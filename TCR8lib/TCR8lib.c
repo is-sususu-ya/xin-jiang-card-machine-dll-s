@@ -410,6 +410,7 @@ BOOL TCR8_Run(TCR8HANDLE h)
 	if( !_IsValidHandle(h) )
 		return FALSE; 
 #ifdef linux
+	return TRUE;
 #else
 	if ( h->m_hThread )
 		return ResumeThread( h->m_hThread ) != 0xFFFFFFFF;
@@ -860,7 +861,7 @@ BOOL TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 	va_start(va, fmt);
 	vsprintf(str, fmt, va);
 	va_end(va);
-	printf( fmt );
+	printf( str );
 #else
 	va_list	va;
 	char	str[ MAX_PATH ] = "";
@@ -2252,8 +2253,7 @@ RetryConnect:
 	{
 		// check for any protocol message in ring buffer that might have to be resend in 'msec'
 		if ( (tout = GetTime2Resend(h)) == 0 )
-			tout = 1000;
-		
+			tout = 1000; 
 		if( !_IsConnectWithCom(h) )
 		{
 			FD_ZERO( &rfd_set );

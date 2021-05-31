@@ -17,17 +17,18 @@
 #define _MAX_EXT 64 
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 	typedef void(CALLTYPE *ACM_EventCallBack)(int, int);
-#ifndef linux
-	DLLAPI void CALLTYPE ACM_SetEventMessage(HWND hWnd, UINT MsgNum);
-#endif
-	DLLAPI void CALLTYPE ACM_SetEventCallBackFunc(ACM_EventCallBack cb);
+#ifndef linux	
 	DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate);
+	DLLAPI void CALLTYPE ACM_SetEventMessage(HWND hWnd, UINT MsgNum);
+#else
+	DLLAPI BOOL CALLTYPE ACM_OpenDevice(const char *ttyDev, int nBaudRate);
+#endif
+	DLLAPI void CALLTYPE ACM_SetEventCallBackFunc(ACM_EventCallBack cb); 
 	DLLAPI BOOL CALLTYPE ACM_CloseDevice(void);
 	DLLAPI BOOL CALLTYPE ACM_IssueCard(void);
 	DLLAPI BOOL CALLTYPE ACM_RecycleCard(void);
