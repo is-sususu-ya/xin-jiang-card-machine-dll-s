@@ -1,15 +1,13 @@
-
 LFLAGS=-lpthread -lm -lrt
 CFLAGS:=-g -I. 
 AIM=demo
 SRC=$(wildcard ./*.c)
 OBJ=$(SRC:%.c=%.o) 
-AR=arm-hisiv100nptl-linux-ar
-CC=arm-hisiv100nptl-linux-gcc
+CC=gcc
  
 all : $(AIM)
 $(AIM) : $(OBJ)
-	$(CC) -o $@ $^ $(LFLAGS)
+	$(CC) -o $@ $^ $(LFLAGS) -ldl
 	@cp -vf $@ /nfsroot/work
 	
 $(OBJ) : %.o:%.c
