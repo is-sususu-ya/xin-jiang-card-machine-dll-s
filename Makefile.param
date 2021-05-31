@@ -1,0 +1,2 @@
+CC=arm-hisiv100nptl-linux-gcc
+CC=gcc

@@ -1,6 +1,6 @@
 #!/bin/bash
 root_dir=`pwd`
-release_dir=$root_dir"linux_release"
+release_dir=$root_dir/"linux_release"
 rm -rf linux_release
 mkdir $release_dir
 for list in $root_dir/TCR8Collect/  $root_dir/TCR8SendCard/
