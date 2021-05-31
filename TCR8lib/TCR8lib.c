@@ -2160,7 +2160,7 @@ static int ReadCommentPacket( TCR8HANDLE h, char *buf, int size, char *NextFrame
 #ifdef linux
 					nHead += _IsConnectWithCom(h) ? tty_read_until( tty, NextFrame+3, size-3, MSG_ETX ) : sock_read_until( fdSocket, NextFrame+3, size-3, MSG_ETX );
 #else
-					nHead += _IsConnectWithCom(h) ? tty_gets( tty, NextFrame+3, size-3, MSG_ETX ) : sock_read_line( fdSocket, NextFrame+3, size-3, MSG_ETX );
+					nHead += _IsConnectWithCom(h) ? tty_gets( tty, NextFrame+3, size-3, MSG_ETX ) : sock_read_until( fdSocket, NextFrame+3, size-3, MSG_ETX );
 #endif
 					NextFrame[nHead] = '\0';
 					*szNextFrame = nHead;
