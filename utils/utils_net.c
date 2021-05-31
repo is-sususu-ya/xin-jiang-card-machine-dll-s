@@ -10,16 +10,7 @@
     Author:	Thomas Chang
 
     1. Add the "get_host_ip" and "get_ifadapter_ip" functions
-		
-		Version: 1.1.1
-		Date 2019-01-06 
-		Author: Thomas Chang
-		Description: 
-		   1) Add too many new functions since 1.0.1
-		   2) replace obsoleted function gethostbyname 
-			 3) sock_connect return -1 on error, instead of negative error code
-			 4) add sock_connect_timeout function prevent connection operation on
-			    an unready destination hang for long time.
+
  ***************************************************************************/
 #ifndef ENABLE_IPV6
 #include <stdio.h>
@@ -27,12 +18,10 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
-#include <netdb.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <netdb.h>
 #include <sys/poll.h>
 #include <sys/socket.h>   
 #include <linux/sockios.h>		// for sock_oqueue SIOCOUTQ
@@ -51,97 +40,69 @@
 #define max( x, y ) ( (x) < (y) ? (y) : (x) )
 #endif
 #include "utils_net.h"
-//#include "longtime.h"
+#include "longtime.h"
 
 //#define NET_TIMEDOUT_ENABLE
 
 #define LOCAL_HOST	0x0100007fL		// this is 127.0.0.1
 
-//static	long	NET_TIMEDOUT_MSEC = 60000;		/* 60 sec == 1 min */
-int sock_set_recvlowat(int fd, int bytes)
+static	long	NET_TIMEDOUT_MSEC = 60000;		/* 60 sec == 1 min */
+
+int sock_set_timeout( long time_ms )
 {
-	return setsockopt(fd, SOL_SOCKET, SO_RCVLOWAT,&bytes,sizeof(int));
+	long	old = NET_TIMEDOUT_MSEC;
+
+	NET_TIMEDOUT_MSEC = time_ms;
+
+	return old;
 }
 
-int sock_set_nonblock(int fd, int non_block)
-{
-	int flags = fcntl(fd, F_GETFL, 0);
-	int rc;
-	if ( non_block )
-		flags |= O_NONBLOCK;
-	else
-		flags &= ~O_NONBLOCK;
-	rc = fcntl(fd, F_SETFL, flags);
-	return rc;
-}
-
-int sock_set_timeout(int fd, int which, int msec)
-{
-	int opt=0;
-	int ret;
-#ifdef linux
-	struct timeval tv;
-	
-	tv.tv_sec = msec / 1000;
-	tv.tv_usec = (msec % 1000) * 1000;
-#else	// winsock
-	int tv = msec;
-#endif	
-	if ( which & _SO_SEND )
-		opt |= SO_SNDTIMEO;
-	if ( which & _SO_RECV )
-		opt |= SO_RCVTIMEO;
-  ret = setsockopt(fd,SOL_SOCKET,opt,(const char*)&tv,sizeof(tv));
-  return ret;
-}
-
-int sock_get_timeout(SOCKET fd, int which)
-{
-	int opt=0;
-	int val=0;
-	int val_len = sizeof(val);
-	int ret;
-
-	if ( which == _SO_SEND )
-		opt = SO_SNDTIMEO;
-	else if ( which == _SO_RECV )
-		opt = SO_RCVTIMEO;
-  ret = getsockopt(fd,SOL_SOCKET,opt,(char *)&val,&val_len);
-  return val;
-}
-
-int sock_connect_timeout( const char *host, int port, int tout )
+int sock_connect( const char *host, int port )
 {
 	struct sockaddr_in	destaddr;
- 	struct hostent 		*hp;
+  struct hostent 		*hp;
 	int 			fd = 0;
-	int		tout_val;
 
 	memset( & destaddr, 0, sizeof(destaddr) );
 	destaddr.sin_family = AF_INET;
 	destaddr.sin_port = htons( (short)port );
-  	if ((inet_aton(host, & destaddr.sin_addr)) == 0)
-  	{
+  if ((inet_aton(host, & destaddr.sin_addr)) == 0)
+  {
       hp = gethostbyname(host);
       if(! hp) return -1;
       memcpy (& destaddr.sin_addr, hp->h_addr, sizeof(destaddr.sin_addr));
-  	}
+  }
 
 	fd = socket(PF_INET, SOCK_STREAM, 0);
 	if (fd < 0)   return -1;
 
-	if ( tout > 0 )
-	{
-		tout_val = sock_get_timeout(fd, _SO_SEND);
-		sock_set_timeout(fd,_SO_SEND,tout);
-	}
-		
 	if ( connect(fd, (struct sockaddr *)&destaddr, sizeof(destaddr)) < 0 )
+	{
+		close(fd);
 		return -1;
+	}
+	return fd;
+}
 
-	if ( tout > 0 )
-		sock_set_timeout(fd,_SO_SEND,tout_val);
+int sock_connect0( unsigned long ul_addr, int port )
+{
+	struct sockaddr_in	destaddr;
+  struct hostent 		*hp;
+	int 			fd = 0;
 
+	memset( & destaddr, 0, sizeof(destaddr) );
+	destaddr.sin_family = AF_INET;
+	destaddr.sin_port = htons( (short)port );
+	destaddr.sin_addr.s_addr = ul_addr;
+	
+	fd = socket(PF_INET, SOCK_STREAM, 0);
+	if (fd < 0)   return -1;
+
+	if ( connect(fd, (struct sockaddr *)&destaddr, sizeof(destaddr)) < 0 )
+	{
+		close(fd);
+		return -1;
+	}
 	return fd;
 }
 
@@ -184,7 +145,7 @@ int sock_accept( int fd_listen )
 	int		tmp=1;
 
 	if ( (fd = accept( fd_listen, (struct sockaddr *) & fromaddr, & addrlen )) != -1 )
-		setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&tmp, sizeof(tmp));
+		setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &tmp, sizeof(tmp));
 	return fd;
 }
 
@@ -199,7 +160,7 @@ const char* sock_getpeername( int fd, int *port )
 		return inet_ntoa( peer_addr.sin_addr );
 	}
 	else
-		return "";	// NOTE - donot return NULL, we may use this function return value in printf argument for text message output
+		return "";			
 }
 
 int sock_getpeeraddr(int fd, struct sockaddr *saddr)
@@ -219,7 +180,7 @@ int sock_getpeeraddr(int fd, struct sockaddr *saddr)
 const char *sockaddr_in_tostring(SOCKADDR_IN *addr, int withport)
 {
 	static char straddr[INET_ADDRSTRLEN+6];
-	short port;
+	unsigned short port;
 	
 	struct in_addr inaddr;
 	inaddr.s_addr = addr->sin_addr.s_addr;
@@ -239,7 +200,7 @@ int is_sockaddr_equal(void *ss1, void *ss2)
 }
 
 
-#if 1
+#ifdef linux
 int sock_wait_for_io_or_timeout(int fd, int for_read, long timeout)
 {
 	struct pollfd 	poll_table[1], *poll_entry = & poll_table[0];
@@ -247,12 +208,11 @@ int sock_wait_for_io_or_timeout(int fd, int for_read, long timeout)
 
 	poll_entry->fd = fd;
 	poll_entry->events = for_read ? POLLIN : POLLOUT;
-	poll_entry->revents = 0;
     do {
 		ret = poll(poll_table, 1, timeout);
-	} while (ret == -1 && errno==EINTR);	// 如果被中断，重新poll
+	} while (ret == -1);
 
-	return (poll_entry->revents==poll_entry->events) ? 0 : -1;
+	return (poll_entry->revents>0) ? 0 : -1;
 }
 #else
 int sock_wait_for_io_or_timeout(int fd, int for_read, long timeout)
@@ -278,45 +238,73 @@ int sock_wait_for_io_or_timeout(int fd, int for_read, long timeout)
 
 int sock_read( int fd, void* buffer, int buf_size )
 {
-	return recv(fd, buffer, buf_size, MSG_NOSIGNAL);
+#ifdef NET_TIMEDOUT_ENABLE
+	if( 0 != sock_wait_for_io_or_timeout(fd, 1, NET_TIMEDOUT_MSEC) ) return -1;
+#endif
+
+	return recv(fd, buffer, buf_size, 0);
 }
 
 int sock_write( int fd, const void* buffer, int buf_size )
 {
+#ifdef NET_TIMEDOUT_ENABLE
+	if( 0 != sock_wait_for_io_or_timeout(fd, 0, NET_TIMEDOUT_MSEC) ) return -1;
+#endif
+	
 	return send(fd, buffer, buf_size, MSG_NOSIGNAL);
 }
 
-int sock_read_nowait( int fd, void* buffer, int buf_size )
+int sock_drain_until( int fd, unsigned char *soh, int ns )
 {
-	return recv(fd, buffer, buf_size, MSG_DONTWAIT|MSG_NOSIGNAL);
+	char buffer[1024];
+	char *ptr;
+	int i, len, nskip=0;
+	while ( sock_dataready(fd,100) )
+	{
+		/* peek the data, but not remove the data from the queue */
+		if ( (len = recv(fd, buffer, sizeof(buffer), MSG_PEEK)) == -1 || len<=0 )
+			return -1;
+
+		/* try to locate soh sequence in buffer */
+		for(i=0, ptr=buffer; i<=len-ns; i++, ptr++) 
+			if ( 0==memcmp( ptr, soh, ns) )
+				break;
+		nskip += ptr - buffer;
+		if ( i > len-ns )
+			recv( fd, buffer, len, 0 );
+		else
+			recv( fd, buffer, (ptr-buffer), 0 );
+		if ( i <= len-ns )
+			break;
+	}
+	return nskip;
 }
 
-int sock_write_nowait( int fd, const void* buffer, int buf_size )
+int sock_getc( int sock, int tout )
 {
-	return send(fd, buffer, buf_size, MSG_DONTWAIT);
+	int		rc;
+	unsigned char	ch = 0;
+
+    if ( (rc = sock_dataready( sock, tout )) > 0 )
+    {
+    	rc = sock_read( sock, &ch, 1 );
+        return rc == 1 ? ch : -2;
+    }
+    /* timed out or I/O error */
+   	return rc-1;	/* 0 -> -1, -1 -> -2 */
 }
 
-int sock_read_until_tout(int fd, char* buffer, int buf_size, int eol, int tout)
+int sock_read_until(int fd, char* buffer, int buf_size, int eol)
 {
 	int len, size, buf_left, i, found=0;
 	char *ptr, *cmpptr;
 
 	for (ptr=buffer,size=0,buf_left=buf_size-1; buf_left>0; /**/) 
 	{
+#ifdef NET_TIMEDOUT_ENABLE
+		if( 0 != sock_wait_for_io_or_timeout(fd, 1, NET_TIMEDOUT_MSEC) ) return -1;
+#endif
 		/* peek the data, but not remove the data from the queue */
-		// NOTE - 为了避免发送端发送错误的数据，或是部分数据，我们需要检查是否有数据才去读
-		//       否则会堵塞住。设置recv超时没有用，sock_set_timeout里对TCP做
-		// 	     setsockopt(fd,SOL_SOCKET,opt...
-		// 	 返回errno=92 (Protocol not available). 第一次读肯定是会有东西(先select才读的)
-		//   但是没有读到指定的结尾，我们继续recv时，如果没有东西，会卡死在里面。
-		//   因此每次recv前需要检查是否有数据，给一个固定的超时时间 100 msec。如果没有东西，返回
-		//	 已经读取到的字节数。
-		if( 0 != sock_wait_for_io_or_timeout(fd, 1, tout) ) 
-		{
-			//   我们不返回0，因为程序会以为TCP断啦 (select有，读回是0字节)
-			buffer[size] = 0;
-			return size;
-		}
 		len = recv(fd, ptr, buf_left, MSG_PEEK);
 		if( (len == 0) || (len < 0 && (errno != EAGAIN || errno != EINTR) ) )
 			return -1;
@@ -345,20 +333,16 @@ int sock_read_until_tout(int fd, char* buffer, int buf_size, int eol, int tout)
 		size += len;
 		buf_left -= len;
 
-		if( found ) 
-		{
+		if( found ) {
 			buffer[size] = '\0';
 			return size;
 		}
 	}
-	// 到此是buffer已经填满但是还没遇见'eol'字节，返回所有peek到的内容
-	return size;
-	// return 0;		// 这里不能返回0，上层会以为socket断掉
+	return 0;
 }
 
-
 // copy w/o remove data from socket buffer
-int sock_peek_until_tout(int fd, char* buffer, int buf_size, int eol, int tout)
+int sock_peek_until(int fd, char* buffer, int buf_size, int eol)
 {
 	int len, size, buf_left, i, found=0;
 	char *ptr, *cmpptr;
@@ -366,16 +350,10 @@ int sock_peek_until_tout(int fd, char* buffer, int buf_size, int eol, int tout)
 	for (ptr=buffer,size=0,buf_left=buf_size-1; buf_left>0; /**/) 
 	{
 		/* peek the data, but not remove the data from the queue */
-		if( 0 != sock_wait_for_io_or_timeout(fd, 1, tout) ) 
-		{
-			//   我们不返回0，因为程序会以为TCP断啦 (select有，读回是0字节)
-			// buffer[size] = 0;
-			return size;
-		}
 		len = recv(fd, ptr, buf_left, MSG_PEEK);
 		if( (len == 0) || (len < 0 && (errno != EAGAIN || errno != EINTR) ) )
-			return -1;				// len==0 是socket断了，返回-1。len=-1是有IO error，如果错误不是EAGAIN或是EINTR也返回-1
-		else if( len < 0 )	// EAGAIN, EINTR
+			return -1;
+		else if( len < 0 )
 			continue;
 
 		/* try finding 'eol' in the data */
@@ -391,32 +369,32 @@ int sock_peek_until_tout(int fd, char* buffer, int buf_size, int eol, int tout)
 		size += len;
 		buf_left -= len;
 
-		if( found ) 
-		{
+		if( found ) {
 			buffer[size] = '\0';
 			return size;
 		}
 	}
-	return size;
+	return 0;
 }
 
-int sock_read_n_bytes_tout(int fd, void* buffer, int n, int tout)
+int sock_read_n_bytes(int fd, void* buffer, int n)
 {
 	char *ptr = buffer;
 	int len;
-	while( n > 0 ) 
-	{
-		if( 0 != sock_wait_for_io_or_timeout(fd, 1, tout) ) 
-			return (ptr-(char*)buffer);
-			
-		len = recv(fd, ptr, n, MSG_NOSIGNAL);
-		if( len == 0 ) break;
-		if( len < 0 ) 
-		{
-			if( errno == EAGAIN || errno == EINTR ) 
-				continue;
-			else // 其他错误，一般是EPIPE (socket关闭)
+	while( n > 0 ) {
+#ifdef NET_TIMEDOUT_ENABLE
+		if( 0 != sock_wait_for_io_or_timeout(fd, 1, NET_TIMEDOUT_MSEC) ) return -1;
+#endif
+
+		//len = recv(fd, ptr, n, MSG_WAITALL);
+		len = recv(fd, ptr, n, 0);
+		if( len==0)			// socket broken. sender close it or directly connected device (computer) power off
+			return -1;
+		if( len < 0 ) {
+			if( errno == EAGAIN || errno == EINTR ) continue;
+			else {
 				return -1;
+			}
 		}
 		ptr += len;
 		n -= len;
@@ -424,15 +402,14 @@ int sock_read_n_bytes_tout(int fd, void* buffer, int n, int tout)
 	return (ptr-(char*)buffer);
 }
 
-int sock_write_n_bytes(int fd, const void* buffer, int size)
+int sock_write_n_bytes(int fd, void* buffer, int size)
 {
 	int len;
-	const char *ptr = (const char *)buffer;
+	char *ptr = (char *)buffer;
 	
 	while ( size > 0 )
 	{
-		// MSG_NOSIGNAL 当socket被断开时别发送SIGPIPE,程序如果没有处理好这个消息(SIG_IGNORE)会死掉
-		len = send(fd, ptr, size, MSG_NOSIGNAL);	
+		len = send(fd, ptr, min(size,1024), MSG_NOSIGNAL);
 		if( (len == 0) || (len < 0 && (errno != EAGAIN || errno != EINTR) ) )
 			return -1;
 		else if( len < 0 )		// this muust be due to EAGAIN or EINTR (send is interrupted)
@@ -444,17 +421,17 @@ int sock_write_n_bytes(int fd, const void* buffer, int size)
 	return ptr - (char *)buffer;
 }
 
-int sock_skip_n_bytes_tout(int fd, int n, int tout)
+int sock_skip_n_bytes(int fd, int n)
 {
 	char buffer[ 1024 ];
 	int len;
 	int left = n;
-	while( left > 0 ) 
-	{
-		if( 0 != sock_wait_for_io_or_timeout(fd, 1, tout) ) 
-			break;
+	while( left > 0 ) {
+#ifdef NET_TIMEDOUT_ENABLE
+		if( 0 != sock_wait_for_io_or_timeout(fd, 1, NET_TIMEDOUT_MSEC) ) return -1;
+#endif
 		//len = recv(fd, ptr, n, MSG_WAITALL);
-		len = recv(fd, buffer, min( n, sizeof( buffer ) ), MSG_NOSIGNAL);
+		len = recv(fd, buffer, min( n, sizeof( buffer ) ), 0);
 		if( len == 0 ) break;
 		if( len < 0 )
 		{
@@ -474,9 +451,9 @@ int sock_drain( int fd )
 	int	rlen, n = 0;
 	char	buf[ 1024 ];
 
-	while ( sock_wait_for_io_or_timeout( fd, 1, 0 )==0 )
+	while ( sock_dataready( fd, 0 ) )
 	{
-		rlen = recv(fd, buf, sizeof(buf), MSG_NOSIGNAL);
+		rlen = recv(fd, buf, sizeof(buf), 0);
 		if ( rlen > 0 )
 			n += rlen;
 		else
@@ -485,43 +462,17 @@ int sock_drain( int fd )
 	return n;
 }
 
-int sock_drain_until( SOCKET fd, void *soh, int ns )
-{
-	char buffer[1024];
-	char *ptr;
-	int i, len, nskip=0;
-	while ( sock_wait_for_io_or_timeout(fd,1,100)==0  )
-	{
-		/* peek the data, but not remove the data from the queue */
-		if ( (len = recv(fd, buffer, sizeof(buffer), MSG_PEEK)) == SOCKET_ERROR || len<=0 )
-			return -1;
-
-		/* try to locate soh sequence in buffer */
-		for(i=0, ptr=buffer; i<=len-ns; i++, ptr++) 
-			if ( 0==memcmp( ptr, soh, ns) )
-				break;
-		nskip += (int)(ptr - buffer);
-		if ( i > len-ns )
-			recv( fd, buffer, len, 0 );
-		else
-			recv( fd, buffer, (int)(ptr-buffer), MSG_NOSIGNAL );
-		if ( i <= len-ns )
-			break;
-	}
-	return nskip;
-}
-
 int sock_is_connected( int fd )
 {
 	fd_set set;
-	struct timeval tv;
+	struct timeval val;
 	int ret;
 
 	FD_ZERO( & set );
 	FD_SET( fd, & set );
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	ret = select( fd+1, &set, NULL, NULL, &tv );
+	val.tv_sec = 0;
+	val.tv_usec = 0;
+	ret = select( fd +1, & set, NULL, NULL, & val );
 	if( ret > 0 ) {
 		// try to peek data
 		char buf[8];
@@ -540,50 +491,48 @@ int sock_is_connected( int fd )
 //================================ U D P ===========================
 int sock_udp_open()
 {
-		return socket( AF_INET, SOCK_DGRAM, 0 );
+	return socket(AF_INET,SOCK_DGRAM,0);		
 }
 
-// Set UDP receiving time out. nTimeOut in msec.
-int sock_udp_timeout( int fd, int nTimeOut )
+int sock_udp_timeout( int sock, int nTimeOut )
 {
-	return setsockopt( fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&nTimeOut, sizeof ( nTimeOut ));
+	return setsockopt( sock, SOL_SOCKET, SO_RCVTIMEO, &nTimeOut, sizeof ( nTimeOut ));
 }
 
-int sock_udp_broadcast( int fd, int enable )
-{
-	return setsockopt( fd, SOL_SOCKET, SO_BROADCAST, (char *)&enable, sizeof(enable) );
-}
-
-SOCKET sock_udp_bindLocalIP( unsigned long ulIP, int port )
+int sock_udp_bindhost(int port,const char *host)
 {
 	struct sockaddr_in 	my_addr;
-	SOCKET		udp_fd;
+	int			tmp=0;
+	int			udp_fd;
 
-	if ( (udp_fd = socket( AF_INET, SOCK_DGRAM, 0 )) != INVALID_SOCKET  )
+	// signal init, to avoid app quit while pipe broken
+//	signal(SIGPIPE, SIG_IGN);
+
+	if ( (udp_fd = socket( AF_INET, SOCK_DGRAM, 0 )) >= 0 )
 	{
-		//int bReuseAddr = 1;
-		//setsockopt( udp_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&bReuseAddr, sizeof(bReuseAddr));
+		setsockopt( udp_fd, SOL_SOCKET, SO_REUSEADDR, &tmp, sizeof(tmp));
 
 		memset(&my_addr, 0, sizeof(my_addr));
 		my_addr.sin_family = AF_INET;
 		my_addr.sin_port = htons ((short)port);
-//		my_addr.sin_addr.s_addr = htonl (ulIP);
-		my_addr.sin_addr.s_addr = ulIP;
-
-		if (bind ( udp_fd, (struct sockaddr *) &my_addr, sizeof (my_addr)) != 0)
+		if ( host != NULL )
+			my_addr.sin_addr.s_addr = inet_addr(host);
+		else
+			my_addr.sin_addr.s_addr = INADDR_ANY;
+		if (bind ( udp_fd, (struct sockaddr *) &my_addr, sizeof (my_addr)) < 0)
 		{
-	        	sock_close( udp_fd );
-	        	udp_fd = INVALID_SOCKET;
-	    }
+    	close( udp_fd );
+    	udp_fd = -EIO;
+  	}
 	}
-  return udp_fd;
+  return udp_fd;	
 }
 
-int sock_udp_bindhost(int port, const char *host)
+int sock_udp_broadcast( int fd, int enable )
 {
-	return sock_udp_bindLocalIP(host ? INET_ATON(host) : INADDR_ANY, port);
+	return setsockopt( fd, SOL_SOCKET, SO_BROADCAST, &enable, sizeof(enable) );
 }
-
+	
 int sock_udp_send( const char *ip, int port, const void* msg, int len )
 {
 	SOCKADDR_IN	udp_addr;
@@ -602,7 +551,7 @@ int sock_udp_send( const char *ip, int port, const void* msg, int len )
 		sock_udp_broadcast(sockfd,1);
 	}
 	else
-		udp_addr.sin_addr.s_addr = INET_ATON(ip);
+		inet_aton( ip, &udp_addr.sin_addr );
 	udp_addr.sin_port = htons( (short)port );
 
 	ret = sendto( sockfd, msg, len, 0, (const struct sockaddr *)&udp_addr, sizeof(udp_addr) );
@@ -610,41 +559,33 @@ int sock_udp_send( const char *ip, int port, const void* msg, int len )
 	return ret;
 }
 
-int sock_udp_send0( int udp_fd, unsigned long ip, int port, const void * msg, int len )
+int sock_udp_send0( int fd, SOCKADDR_IN *paddr, int port, const void* msg, int len )
 {
-	SOCKADDR_IN	udp_addr;
-	int	ret;
-	
-	memset( & udp_addr, 0, sizeof(udp_addr) );
-	udp_addr.sin_family = AF_INET;
-	udp_addr.sin_addr.s_addr = ip;		// NOTE - dwIP is already network format. DON'T USE htonl(dwIP)
-	udp_addr.sin_port = htons( (short)port );
+ SOCKADDR_IN	udp_addr;
+
+	if ( paddr == NULL )
+	{
+		paddr = &udp_addr;
+		memset( & udp_addr, 0, sizeof(udp_addr) );
+		udp_addr.sin_family = AF_INET;
+		udp_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);		
+		udp_addr.sin_port = htons( (short)port );
+	}
+
 	if ( len == 0 )
-		len = strlen( msg );
-
-	ret = sendto( udp_fd, msg, len, MSG_DONTWAIT, (const struct sockaddr *) & udp_addr, sizeof(udp_addr) );
-
-	return ret;
+		len = strlen( (char *)msg );
+	return sendto( fd, msg, len, 0, (const struct sockaddr *)paddr, sizeof(SOCKADDR_IN) );
 }
 
 int sock_udp_sendX( int fd, SOCKADDR_IN *paddr, int ndst, const void* msg, int len )
 {
 	int i;
-	int send_len=0;
-	SOCKADDR_IN  baddr;
-	
+	int total_len = 0;
 	if ( len == 0 )
 		len = strlen( (char *)msg );
-	if ( ndst==0 || paddr==NULL )
-	{
-		paddr = &baddr;
-		paddr->sin_addr.s_addr = htonl(INADDR_BROADCAST);
-		paddr->sin_family = AF_INET;
-		ndst = 1;
-	}
 	for(i=0; i<ndst; i++)
-		send_len += sendto( fd, msg, len, 0, (const struct sockaddr *)(paddr+i), sizeof(SOCKADDR_IN) );
-	return send_len;
+		total_len += sendto( fd, msg, len, 0, (const struct sockaddr *)&paddr[i], sizeof(SOCKADDR_IN) );
+	return total_len;
 }
 
 int sock_udp_recv2( int fd, void *buf, int size, SOCKADDR *src,int *paddrlen )
@@ -664,6 +605,30 @@ int sock_udp_recv2( int fd, void *buf, int size, SOCKADDR *src,int *paddrlen )
 }
 
 //========================== c o m m o n ==============================
+int sock_dataready( int fd, int tout )
+{
+	fd_set	rfd_set;
+	struct	timeval tv, *ptv;
+	int	nsel;
+
+	FD_ZERO( &rfd_set );
+	FD_SET( fd, &rfd_set );
+	if ( tout == -1 )
+	{
+		ptv = NULL;
+	}
+	else
+	{
+		tv.tv_sec = 0;
+		tv.tv_usec = tout * 1000;
+		ptv = &tv;
+	}
+	nsel = select( fd+1, &rfd_set, NULL, NULL, ptv );
+	if ( nsel > 0 && FD_ISSET( fd, &rfd_set ) )
+		return 1;
+	return 0;
+}
+
 int sock_iqueue(int fd)
 {
 	unsigned long ul;
@@ -710,7 +675,6 @@ unsigned long get_host_ip( const char *hostname, char *buf )
 	return ipaddr;
 }
 
-
 unsigned long get_ifadapter_ip( const char *ifa_name, char *buf, SOCKADDR_IN *netmask, SOCKADDR_IN *ip_bcast  )
 {
 	struct	ifaddrs	*ifaddr, *ifaddr_head;
@@ -723,7 +687,7 @@ unsigned long get_ifadapter_ip( const char *ifa_name, char *buf, SOCKADDR_IN *ne
 			ifaddr = ifaddr_head;
 			while ( ifaddr )
 			{
-				if ( ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET &&
+				if ( ifaddr->ifa_addr->sa_family == AF_INET &&
 				     strcmp( ifaddr->ifa_name, "lo" ) )
 				{
 					ipaddr = ((struct sockaddr_in *)(ifaddr->ifa_addr))->sin_addr.s_addr;
@@ -739,7 +703,7 @@ unsigned long get_ifadapter_ip( const char *ifa_name, char *buf, SOCKADDR_IN *ne
 			ifaddr = ifaddr_head;
 			while ( ifaddr )
 			{
-				if ( ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET &&
+				if ( ifaddr->ifa_addr->sa_family == AF_INET &&
 				     !strcmp( ifaddr->ifa_name, ifa_name ) )
 				{
 					ipaddr = ((struct sockaddr_in *)(ifaddr->ifa_addr))->sin_addr.s_addr;
@@ -768,7 +732,7 @@ const char *get_ifadapter_name()
 		ifaddr = ifaddr_head;
 		while ( ifaddr )
 		{
-			if ( ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET &&
+			if ( ifaddr->ifa_addr->sa_family == AF_INET &&
 			     strcmp( ifaddr->ifa_name, "lo" ) )
 			{
 				strcpy(if_name, ifaddr->ifa_name);
@@ -779,33 +743,6 @@ const char *get_ifadapter_name()
 		freeifaddrs( ifaddr_head );
 	}
 	return if_name;
-}
-
-int get_all_interface(IF_ATTR4 ifattr[], int size)
-{
-	struct	ifaddrs	*ifaddr, *ifaddr_head;
-	int		entry=0;
-	
-	if ( getifaddrs( &ifaddr_head ) == 0 )
-	{
-		ifaddr = ifaddr_head;
-		while ( ifaddr && entry < size)
-		{
-			if ( ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET &&
-			     strcmp( ifaddr->ifa_name, "lo" )!=0 &&
-			     (ifaddr->ifa_flags & IFF_POINTOPOINT)==0 )
-			{
-				strcpy(ifattr[entry].ifa_name, ifaddr->ifa_name);
-				ifattr[entry].addr.s_addr = ((SOCKADDR_IN *)ifaddr->ifa_addr)->sin_addr.s_addr;
-				ifattr[entry].mask.s_addr = ((SOCKADDR_IN *)ifaddr->ifa_netmask)->sin_addr.s_addr;
-			  ifattr[entry].broadcast.s_addr = ((SOCKADDR_IN *)ifaddr->ifa_broadaddr)->sin_addr.s_addr;
-				entry++;
-			}
-			ifaddr = ifaddr->ifa_next;
-		}	
-		freeifaddrs( ifaddr_head );
-	}	
-	return entry;
 }
 
 int get_netmask( const char *ifname, SOCKADDR_IN *netmask )
@@ -1117,177 +1054,9 @@ const char *INET_NTOA2( unsigned long ip, char *numdot )
 	return ptr;
 }
 
-////////////////////////////////////////////////////////////
-#pragma pack (push,1)
-typedef struct {
-	unsigned char icmp_type;				//消息类型
-	unsigned char icmp_code;			//清息代码
-	unsigned short icmp_checksum; //16位效验
-	unsigned short icmp_id;				//用来唯一标识些请求的ID号
-	unsigned short icmp_sequence;	//序列号
-	unsigned long icmp_timestamp;	//时间戳
-} ICMPPACK, *PICMPPACK;
-#pragma pack (pop)
-/*
-int sock_get_ttl(SOCKET s)
+const char *SOCKADDR_IN_TOSTRING(SOCKADDR_IN addr)
 {
-	int ttl_count;
-	int len = sizeof(ttl_count);
-	int rc = getsockopt(s,IPPROTO_IP,IP_TTL,(char *)&ttl_count,&len);
-	return ttl_count;
+	return sockaddr_in_tostring(&addr,1);
 }
-*/
-static unsigned short icmp_checksum(unsigned short *buff,int size)
-{
-	unsigned long cksum=0;
-	while(size>1)
-	{
-		cksum+=*buff++;
-		size -= sizeof(unsigned short);
-	}
-	if (size)
-	{
-		cksum += *(unsigned char*)buff;
-	}
-	cksum = (cksum>>16)+(cksum&0xffff);
-	cksum+=cksum>>16;
-	return (unsigned short)(~cksum);
-}
-
-static unsigned long GetTickCount()
-{
-	static signed long long begin_time = 0;
-	static signed long long now_time;
-	struct timespec tp;
-	unsigned long tmsec = 0;
-	if ( clock_gettime(CLOCK_MONOTONIC, &tp) != -1 )
-	{
-		now_time = tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
-	}
-	if ( begin_time == 0 )
-		begin_time = now_time;
-	tmsec = (unsigned long)(now_time - begin_time);
-	return tmsec;
-}
-#define closesocket(s)	close(s)
-#define GetCurrentProcessId()	getpid()
-#define Sleep(n)		usleep((n)*1000)
-
-// 返回值
-// >=0 平均响应时间(msec)
-// -1 没有任何应答
- int ping(const char *IP, unsigned short port, int ping_times)
-{
-	struct sockaddr_in desAddr;
-	SOCKET sock_raw;
-	char buff[sizeof(ICMPPACK)+32];	//创建ICMP包
-	PICMPPACK pICMP=(PICMPPACK)buff;
-	ICMPPACK *pTemp;
-	unsigned short nSeq=0;
-	char recvBuf[1024];
-	struct sockaddr_in from;
-	int nLen=sizeof(struct sockaddr_in);
-	int count=0;
-	int nRet;
-	int nTick;
-	int	success_times=0;
-	int	total_msec = 0;
-	int nTimeOut = 1000;		// 每次发送ping帧只等待1000msec获取应答,没有收到就当作没有应答
-	long dwTick2Wait;
-
-	sock_raw = socket(AF_INET,SOCK_RAW,IPPROTO_ICMP);
-	if( INVALID_SOCKET == sock_raw)
-	{
-		//printf("failed to create raw socket\n");
-		return 0;
-	}
-
-	// 设置接收超时
-    setsockopt(sock_raw, SOL_SOCKET, SO_RCVTIMEO, (char const*)&nTimeOut, sizeof(nTimeOut));
-
-	//设置目标地址
-	desAddr.sin_addr.s_addr=inet_addr(IP);
-	desAddr.sin_port = htons(port);
-	desAddr.sin_family = AF_INET;
-
-	pICMP->icmp_type=8; //请求回显
-	pICMP->icmp_code=0;
-	pICMP->icmp_checksum=0;
-	pICMP->icmp_id=(unsigned short)GetCurrentProcessId();
-	pICMP->icmp_sequence=0;
-	pICMP->icmp_timestamp=0;
-
-	memset(&buff[sizeof(ICMPPACK)],'E',32);   //填充用户数据
-	for(count=0; count<ping_times; count++)
-	{
-
-		// wait for a short period before start to send next ICMP packet
-		if ( count )
-			Sleep(100);
-
-		// send ping packet
-		pICMP->icmp_checksum=0;
-		pICMP->icmp_sequence=nSeq++;
-		pICMP->icmp_timestamp = GetTickCount();
-		pICMP->icmp_checksum = icmp_checksum((unsigned short *)buff,sizeof(ICMPPACK)+32);
-		if ( sendto(sock_raw, buff, sizeof(ICMPPACK)+32, 0, (struct sockaddr *)&desAddr, sizeof(desAddr)) == -1 )
-		{
-			//printf("sendto() failed \n");
-			closesocket(sock_raw);
-			return -1;
-		}
-		dwTick2Wait = GetTickCount() + nTimeOut;
-		// receive ICMP response
-		while ( GetTickCount() <= dwTick2Wait )
-		{
-			if ( (nRet=recvfrom(sock_raw,recvBuf,sizeof(recvBuf),0,(struct sockaddr *)&from,&nLen)) <= 0 )
-			{
-				if (nRet==-1)		// 超时
-				{
-					continue;		// 第一次不可能time-out, 至少会收到自己发出去的帧
-				}
-				else	// 0 - socket关闭,几乎不可能发生
-				{
-					closesocket(sock_raw);
-					return -1;
-				}
-			}
-			nTick = GetTickCount();
-			if (nRet<20+sizeof(ICMPPACK))
-			{
-				//printf("too few bytes from %s, ignored \n",inet_ntoa(from.sin_addr));
-				continue;
-			}
-			pTemp=(ICMPPACK *)(recvBuf+20);		// 前面20字节是IP头
-			if (pTemp->icmp_type!=0)
-			{
-				//printf(" not ICMP_ECHO type received\n");
-				continue;
-			}
-
-			if (pTemp->icmp_id != (unsigned short)GetCurrentProcessId())
-			{
-				//printf("get some one else packet\n");
-				continue;
-			}
-			/*/printf("%d reply from %s: bytes=%d time<%dms TTL=%d\n",
-				pTemp->icmp_sequence,
-				inet_ntoa(from.sin_addr),
-				nRet,
-				nTick-pTemp->icmp_timestamp,
-				sock_get_ttl (sock_raw));
-				*/
-			// now is the ICMP response from target 
-			total_msec += nTick-pTemp->icmp_timestamp;
-			success_times++;
-			break;
-		}	// while ( GetTickCount() <= dwTick2Wait )
-	}  // for (count=0,...
-	closesocket( sock_raw );
-	if ( success_times > 0 )
-		return total_msec/success_times + 1;
-	return -1;
-}
-
 
 #endif

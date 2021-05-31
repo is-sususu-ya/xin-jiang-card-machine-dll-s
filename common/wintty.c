@@ -8,8 +8,6 @@
 #include <windows.h>
 #include "wintty.h"
 
-#define _CRT_SECURE_NO_WARNINGS
-
 int tty_read( int fd_tty, void *buffer, int len )
 {
 	HANDLE	hFile = (HANDLE)_get_osfhandle( fd_tty );

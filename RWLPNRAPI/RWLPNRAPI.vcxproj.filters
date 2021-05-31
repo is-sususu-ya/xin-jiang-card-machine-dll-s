@@ -14,4 +14,46 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="lpnrprotocol.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="rwlpnrapi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\longtime.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\mtrace.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\winnet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\wintty.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="rwlpnrapi.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\longtime.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\mtrace.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\winnet.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\wintty.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RWLPNRAPI.def">
+      <Filter>源文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>

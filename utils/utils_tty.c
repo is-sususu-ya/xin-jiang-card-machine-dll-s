@@ -1,15 +1,14 @@
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdarg.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include "utils_tty.h"
+#include "longtime.h"
 
 #ifdef linux
 #include <unistd.h>
@@ -31,7 +30,7 @@ int tty_raw( int fd_tty, struct termios *p_tty, int baud )
     	struct termios tty;
 
     	if ( tcgetattr (fd_tty, &tty) != 0 )
-				return -1;;
+		return -1;;
     	if ( p_tty != NULL )
     		memcpy( p_tty, &tty, sizeof( struct termios ) );
 #if 1
@@ -44,7 +43,7 @@ int tty_raw( int fd_tty, struct termios *p_tty, int baud )
     	tty.c_cc[VMIN] = 1;
     	tty.c_cc[VTIME] = 0;
 #else
-    	if (cfmakeraw( &tty ) != 0 );		// Same effect as code in above block
+    	if (cfmakeraw( &tty ) != 0 );		// Same effect as code in above disabled codes
     		return -1;
 #endif
     	if ( baud > 0 )
@@ -110,6 +109,9 @@ int tty_ready( int fd, int tout )
  *      >= 0: character received from tty
  *       -1: no data.
  */
+#define MAX_SEQ		3
+#define MSBCH		10		// 10 ms delay time between characters
+
 int tty_getc( int fd, int tout, int esc_on )
 {
 	int		rc=-1;
@@ -118,6 +120,78 @@ int tty_getc( int fd, int tout, int esc_on )
 	if ( (rc = tty_ready( fd, tout )) > 0 )
 	{
 		rc = read( fd, &ch, 1 );
+#ifdef ENABLE_TTYESCSEQ		
+		/* if this is a <Esc>, check for escape sequence
+		 * If input is not a valid escape sequence. The char has been
+		 * read and checked for will be lost. Sorry, I cannot unget the chars.
+		 */
+		if ( ch == KEY_ESC && esc_on && tty_ready(fd,MSBCH) )
+		{
+  		char	ch1, ch2;
+			int	key;
+
+			read(fd, &ch, 1);
+			if ( ch != '[' )
+				return ch;	// Sorry, Esc is gone.
+
+			read(fd, &ch1, 1);
+			switch( ch1 )
+			{
+				case 'A':	return KEY_UP;
+				case 'B':	return KEY_DOWN;
+				case 'C':	return KEY_RIGHT;
+				case 'D':	return KEY_LEFT;
+				case 'P':	return KEY_PAUSE;
+				case '1':	key = KEY_HOME;		break;
+				case '2':	key = KEY_INS;		break;
+				case '3':	key = KEY_DEL;		break;
+				case '4':	key = KEY_END;		break;
+				case '5':	key = KEY_PGUP;		break;
+				case '6':	key = KEY_PGDN;		break;
+				default:
+					key = 0;
+			}
+			if ( key != 0 && tty_ready(fd,MSBCH) )
+			{
+				read( fd, &ch2, 1 );
+				if ( ch2 == '~' ) return key;
+				if ( key == KEY_HOME )		// <Esc>[1x~
+				{	/* check for F1 ~ F12 */
+					if ( ch2 >= '1' && ch2 <= '5' )
+						key = KEY_FN(ch2-'0');		// F1 ~ F5
+					else if ( ch2 >= '7' && ch2 <= '9' )
+						key = KEY_FN(ch2-'1');		// F6 ~ F8
+					else
+						key = 0;
+				}
+				else if ( key == KEY_INS )	// <Esc>[2x~
+				{
+					if ( ch2 == '0' || ch2 == '1' )
+						key = KEY_FN(ch2-'0'+9);	// F9, F10
+					else if ( '3' <= ch2 && ch2 <= '6' )
+						key = KEY_SFN(ch2-'2');		// Shift-F1 ~ Shift-F4
+					else if ( ch2=='8' || ch2=='9' )
+						key = KEY_SFN(ch2-'3');		// Shift-F5, Shift-F6
+					else
+						key = 0;
+				}
+				else if ( key == KEY_DEL )	// <Esc>[3x~
+				{
+					if ( '1' <= ch2 && ch2 <= '4' )
+						key = KEY_SFN(ch2-'1'+7);
+					else
+						key = 0;
+				}
+				if ( key != 0 )
+				{
+					read( fd, &ch2, 1 );		// eat last '~'
+					if ( ch2 != '~' )
+						key = 0;
+				}
+			}
+ 			return key == 0 ? ch1 : key;	// sorry drop few characters.
+		}
+#endif   		
 	}
  	return rc == 1 ? ch : -1;
 }
@@ -185,17 +259,26 @@ int tty_read_tout( int fd, char *buf, int bufsize, int tout )
 	}
 	else
 	{
-		unsigned long lt_end = GetTickCount() + tout;
+		_longtime lt_end = timeGetLongTime() + tout;
 		do
 		{
 			n = read( fd, buf, bufsize );
 			nc += n;
 			bufsize -= n;
 			buf += n;
-		} while ( bufsize>0 && GetTickCount() < lt_end );
+		} while ( bufsize>0 && timeGetLongTime() < lt_end );
 	}
 	return nc;
 }
+
+#ifdef WIN32
+#define MAX_SKIP_COUNT	4096
+static unsigned char byte_skip[MAX_SKIP_COUNT];
+const unsigned char *tty_get_skipped()
+{
+	return byte_skip;
+}
+#endif
 
 int tty_skip_until(int fd, unsigned char *soh, int size, int *found )
 {
@@ -205,6 +288,10 @@ int tty_skip_until(int fd, unsigned char *soh, int size, int *found )
 catch_again:
 	while ( (rc=tty_getc(fd,size,0))>=0 && (unsigned char)rc != soh[0] ) 
 	{
+#ifdef WIN32		
+		if ( nskip < MAX_SKIP_COUNT )
+			byte_skip[nskip] = (unsigned char)rc;
+#endif			
 		nskip++;
 	}
 	if ( rc == -1 ) return nskip;
@@ -214,6 +301,10 @@ catch_again:
 		{
 			if ( rc>=0 ) 
 			{
+#ifdef WIN32				
+				if ( nskip < MAX_SKIP_COUNT )
+					byte_skip[nskip] = (unsigned char)rc;
+#endif					
 				nskip++;
 				goto catch_again;
 			}
@@ -246,6 +337,10 @@ catch_again:
 	// get first byte in any one of SOH sequence
 	while ( (rc=tty_getc(fd,size,0))>=0 &&  (index=byte_in_oneof((unsigned char)rc,soh,0,nh))==-1 )
 	{
+#ifdef WIN32		
+		if ( nskip < MAX_SKIP_COUNT )
+			byte_skip[nskip] = (unsigned char)rc;
+#endif			
 		nskip++;
 	}
 	if ( rc == -1 ) return nskip;
@@ -255,6 +350,10 @@ catch_again:
 		{
 			if ( rc>=0 ) 
 			{
+#ifdef WIN32				
+				if ( nskip < MAX_SKIP_COUNT )
+					byte_skip[nskip] = ch;
+#endif					
 				nskip++;
 				goto catch_again;
 			}
@@ -264,18 +363,6 @@ catch_again:
 	}
 	*soh_index = index;
 	return nskip;
-}
-
-int tty_read_until(int fd, char *buf, int size, int eol)
-{
-	int i=0, rc;
-
-	while ( (rc=tty_getc(fd,20,0))>=0 ) 
-	{
-		buf[i++] = (char)rc;
-		if ( i==size || rc==eol ) break;
-	}
-	return i;	
 }
 
 int tty_read_n_bytes(int fd, void *buffer, int n)
@@ -299,18 +386,48 @@ int tty_read_n_bytes(int fd, void *buffer, int n)
 	return (ptr-(char*)buffer);	
 }
 
-int tty_iqueue(int fd)
+
+
+#ifdef ENABLE_TTYESCSEQ
+//-------------------  c o n t r o l ---------------------
+void tty_goto( int fd, int x, int y )
 {
-	int arg;
-	ioctl(fd, TIOCINQ, &arg);
-	return arg;
+	char *escape="\033[%d;%dH";
+	char cmd[64];
+
+	sprintf( cmd, escape, x, y );
+	write( fd, cmd, strlen(cmd) );
 }
 
-int tty_oqueue(int fd)
+// attribute list argument must be terminated by -1
+// ex.: tty_attribute( 1, 1, 5, 34, 40, -1 );
+
+void tty_attribute( int tty, ... )
 {
-	int arg;
-	ioctl(fd, TIOCOUTQ, &arg);
-	return arg;
+	va_list	va;
+	int	attr, narg = 0;
+	char	cmd[80] = "\033[";
+	char	*ptr = cmd + 2;
+
+	va_start( va, tty );
+
+	while ( ( attr=va_arg(va,int) ) != -1 )
+	{
+		if ( narg == 0 )
+			sprintf( ptr, "%d", attr );
+		else
+			sprintf( ptr, ";%d", attr );
+		ptr += strlen( ptr );
+		narg++;
+	}
+
+	va_end( va );
+
+	if ( narg )
+	{
+		*ptr ++ = 'm';
+		*ptr ++ = '\0';
+		write( tty, cmd, strlen(cmd) );
+	}
 }
-
-
+#endif
