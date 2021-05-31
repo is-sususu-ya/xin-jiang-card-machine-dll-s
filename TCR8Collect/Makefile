@@ -1,6 +1,6 @@
 
 LFLAGS=-lpthread -lm -lrt
-CFLAGS:=-g -I. -DENABLE_TESTCODE -I.
+CFLAGS:=-g -I. -DENABLE_TESTCODE -I. -I../utils
 
 AIM=libTCR8.so
 SRC=$(wildcard ./*.c)

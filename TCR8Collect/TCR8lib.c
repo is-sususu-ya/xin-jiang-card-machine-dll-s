@@ -57,17 +57,7 @@ LANGID	m_langId;
 #define MAX_PATH 256
 #define IsChinese() 	(1) 
 #endif
-
-static int sock_getc()
-{
-	// TODO
-}
- 
-static int sock_connect0()
-{
-	
-}
-
+  
 #define VERSION_TCR8LIBRATY		"V1.1.8"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

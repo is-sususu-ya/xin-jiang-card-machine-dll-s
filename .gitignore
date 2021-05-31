@@ -7,3 +7,24 @@ Debug*
 Release*
 ipch*
 
+*.so
+*.o
+*tags
+*.swp
+*~
+build-*
+ui_*.h
+*.zip
+*.tar.gz
+Test*
+Releae*
+Release
+!Release.sh
+parklc
+
+.vscode/
+lc/parklc
+lc/tools/parklot
+master.code-workspace
+mod_adm_sqlite/ready
+mod_dock/client/client
