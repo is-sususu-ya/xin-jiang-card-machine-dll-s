@@ -1,0 +1,9 @@
+*.so
+*swp
+*.tags
+*.db
+*db
+Debug*
+Release*
+ipch*
+
