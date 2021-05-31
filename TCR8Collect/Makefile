@@ -4,7 +4,7 @@ CFLAGS:=-g -I. -DENABLE_TESTCODE -I. -I../utils
 
 AIM=libTCR8.so
 SRC=$(wildcard ./*.c)
-SRC+=../utils/utils_net.c ../utils/utils_tty.c
+SRC+=../utils/utils_net.c ../utils/utils_tty.c ../TCR8lib/TCR8lib.c
 OBJ=$(SRC:%.c=%.o) 
 AR=arm-hisiv100nptl-linux-ar
 CC=arm-hisiv100nptl-linux-gcc

@@ -1,13 +1,18 @@
 
 #include <string.h>
-#include "../TCR8Lib/TCR8lib.h" 
+#include "../TCR8lib/TCR8lib.h" 
 #include "TCR8SendCard.h"
 
 #define TCR8LOG_DEFAULT_PATH	"D:/rwlog/RunwellTCR8Dll.log"
 
+#undef MAX_PATH
+#define MAX_PATH 256
+
 typedef struct tagTCR8UserData {
+#ifndef linux
 	HWND	hWnd;
 	UINT	Msg; 
+#endif
 	ACM_EventCallBack pEventCB; 
 	char    TxData[64];
 	char    RxData[32];
@@ -20,7 +25,7 @@ typedef struct tagTCR8UserData {
 #define STRING_DLL_VRESION	"1.4.0"
   
 TCR8HANDLE   m_hTCR8 = NULL;
-TCR8UserData m_TCR8UserData = { NULL, 0, NULL, "", "", "", FALSE, 0 };
+TCR8UserData m_TCR8UserData = {0};
  
 static void ACM_EventHandle( void *hMachine, int nEventId, int nParam )
 {
@@ -59,11 +64,13 @@ static void ACM_EventHandle( void *hMachine, int nEventId, int nParam )
 		TCR8_EnableKernelLog( hTCR8, TRUE );
 	}
 
+#ifndef linux
 	if( m_TCR8UserData.hWnd != NULL )
 	{
 		TCR8_Log( hTCR8, "PostMessage() hWnd = %p, Msg = %d, wParam(nEventId) = %d, lParam(nParam) = %d\n", m_TCR8UserData.hWnd, m_TCR8UserData.Msg, nEventId, nParam );
 		PostMessage( pUserData->hWnd, pUserData->Msg, nEventId, nParam );
 	}
+#endif
 	
 	if( m_TCR8UserData.pEventCB != NULL )
 	{
@@ -74,13 +81,15 @@ static void ACM_EventHandle( void *hMachine, int nEventId, int nParam )
 	
 }
  
+#ifndef linux
 DLLAPI void CALLTYPE ACM_SetEventMessage(HWND hWnd, UINT MsgNum)
 {
 	m_TCR8UserData.hWnd = hWnd;
 	m_TCR8UserData.Msg  = MsgNum;
 }
+#endif
 
-DLLAPI void _stdcall ACM_SetEventCallBackFunc(ACM_EventCallBack cb)
+DLLAPI void CALLTYPE ACM_SetEventCallBackFunc(ACM_EventCallBack cb)
 {
 	m_TCR8UserData.pEventCB = cb;
 }
@@ -88,10 +97,12 @@ DLLAPI void _stdcall ACM_SetEventCallBackFunc(ACM_EventCallBack cb)
 DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate)
 {
 	FILE *fp = NULL;
+#ifndef linux
 	HMODULE hDll;
-	char chDllPath[MAX_PATH];
-	char drive[_MAX_DRIVE];
-	char dir[_MAX_DIR];
+#endif
+	char chDllPath[256];
+	char drive[64];
+	char dir[256];
 
 	if( m_hTCR8 != NULL )
 	{
@@ -111,6 +122,7 @@ DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate)
 	m_TCR8UserData.bContainCardOnAnt = FALSE;
 	m_TCR8UserData.nStatusChange = 0;
 
+#ifndef linux
 	// 获取动态库所在目录
 	hDll = GetModuleHandle("AutoCardMachine.dll");
 	if( hDll == NULL )
@@ -147,8 +159,7 @@ DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate)
 					{
 						ptr += strlen( "bContainCardOnAnt=" );
 						TCR8_Log( m_hTCR8, "\tbContainCardOnAnt=%s\n", ptr );
-						while ( *ptr && !isalpha( *ptr ) ) ptr++;
-
+						while ( *ptr && !isalpha( *ptr ) ) ptr++; 
 					#ifdef linux
 						if( strncasecmp( ptr, "TRUE", 4 ) == 0 )
 					#else
@@ -163,7 +174,9 @@ DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate)
 			}
 		}
 	}
-
+#else
+	// TODO
+#endif
 	// set user data and callback function
 	//memset( &m_TCR8UserData, 0, sizeof(m_TCR8UserData) );
 	_SetUserData( m_hTCR8, &m_TCR8UserData );
