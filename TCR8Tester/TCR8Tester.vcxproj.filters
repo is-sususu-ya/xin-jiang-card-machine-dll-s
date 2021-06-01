@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{2d491c0f-6bc9-4971-a0d8-b52962dec6e9}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{b4d8744f-b1b3-4613-910c-7dd9cbc65d55}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{ac60a7cb-d5a0-43cc-9de3-d710b3808d4f}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ProtocolViewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetBoxInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TCR8LogViewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TCR8Tester.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TCR8TesterDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TextProgressBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TCR8Tester.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ProtocolViewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetBoxInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TCR8LogViewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TCR8Tester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TCR8TesterDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextProgressBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\1_G_54X50.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\1_R_54X50.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\2_G_54X50.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\2_R_54X50.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\3_G_54X50.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\3_R_54X50.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\4_G_54X50.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\4_R_54X50.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap_a.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\CardOnReader_64X48.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\CSCExit1_64X38.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\CSCOnExit1_64X38.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Reader_64X48.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\TCR8Tester.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="res\TCR8Tester.rc2">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

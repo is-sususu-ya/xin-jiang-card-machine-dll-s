@@ -15,10 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
+    <ClCompile Include="TCR8lib.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\winnet.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\wintty.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
+    <ClInclude Include="TCR8lib.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\common\winnet.h">
@@ -27,26 +35,6 @@
     <ClInclude Include="..\common\wintty.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TCR8CollectCard.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\TCR8lib\TCR8lib.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\common\winnet.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\wintty.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="TCR8CollectCard.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\TCR8lib\TCR8lib.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Source.def">

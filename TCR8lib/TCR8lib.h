@@ -15,6 +15,20 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/stat.h>
+ 
+#ifndef linux  
+#define DLLAPI		__declspec(dllexport)
+#define CALLTYPE	__stdcall   
+#else  // [linux]
+#include "wintype.h" 
+#define DLLAPI
+#define CALLTYPE
+#define	IN
+#define OUT 
+#define _MAX_FNAME 256
+#define _MAX_EXT 64 
+#endif
+
 
 typedef enum {
 	tsIdle, tsBegin, tsRWDone, tsEJFail, tsOnExit } TRState;
@@ -199,44 +213,38 @@ extern "C" {
 #endif
 
 // initial/uninitial
-TCR8HANDLE TCR8_Create();
-void TCR8_Destroy(TCR8HANDLE h);
+DLLAPI TCR8HANDLE CALLTYPE  TCR8_Create();
+DLLAPI void CALLTYPE TCR8_Destroy(TCR8HANDLE h);
 #ifdef linux
-BOOL TCR8_SetComPort( TCR8HANDLE h, const char *dev_name, int nBaudrate );
-#else
-BOOL TCR8_SetComPort( TCR8HANDLE h, int nPort, int nBaudrate );
-#endif
-BOOL TCR8_SetCallback( TCR8HANDLE h, void (*)( void *, int, int) );
-
-// thread control
-BOOL TCR8_OpenDevice(TCR8HANDLE h);
-BOOL TCR8_OpenDeviceNet(TCR8HANDLE h, const char *chIP);
-BOOL TCR8_CloseDevice(TCR8HANDLE h);
-BOOL TCR8_Run(TCR8HANDLE h);
-BOOL TCR8_Suspend(TCR8HANDLE h);
-
-// machine control
-BOOL TCR8_EjectCard(TCR8HANDLE h, int nChannel );
-BOOL TCR8_ForceEjectCard( TCR8HANDLE h, int nChannel );
-BOOL TCR8_RecycleCard(TCR8HANDLE h);
-BOOL TCR8_ForceRecycleCard( TCR8HANDLE h, int nChannel );
-BOOL TCR8_CancelButton(TCR8HANDLE h);
-BOOL TCR8_SwitchChannel(TCR8HANDLE h, int nChannel );
-BOOL TCR8_SwitchAntenna(TCR8HANDLE h, int nAnt );
-BOOL TCR8_ReturnCard( TCR8HANDLE h, int nChannel );
-BOOL TCR8_CollectCard( TCR8HANDLE h, int nChannel );
-BOOL TCR8_TriggerButton( TCR8HANDLE h, int nChannel );
-BOOL TCR8_PullBackToAnt( TCR8HANDLE h, int nChannel );
-
-// helper
-BOOL TCR8_SetCartridgeInfo( TCR8HANDLE h, int nChannel, DWORD dwSN, int nCount );
-BOOL TCR8_EnableLog( TCR8HANDLE h, LPCTSTR strPath );		// if strPath is NULL means disable.
-BOOL TCR8_EnableKernelLog( TCR8HANDLE h, BOOL bEnable );
-BOOL TCR8_Log(TCR8HANDLE h, LPCTSTR fmt,...);
-LPCTSTR TCR8_GetEventText( int nEventId, int nParam );
-LPCTSTR TCR8_GetTransStateText(int st);
-LPCTSTR TCR8_GetButtonIgnoreText( int code );
-BOOL TCR8_PlayAudio(TCR8HANDLE h, int nIndex );
+DLLAPI BOOL CALLTYPE TCR8_SetComPort( TCR8HANDLE h, const char *dev_name, int nBaudrate );
+#else    
+DLLAPI BOOL CALLTYPE TCR8_SetComPort( TCR8HANDLE h, int nPort, int nBaudrate );
+#endif    
+DLLAPI BOOL CALLTYPE TCR8_SetCallback( TCR8HANDLE h, void (*)( void *, int, int) ); 
+DLLAPI BOOL CALLTYPE TCR8_OpenDevice(TCR8HANDLE h);
+DLLAPI BOOL CALLTYPE TCR8_OpenDeviceNet(TCR8HANDLE h, const char *chIP);
+DLLAPI BOOL CALLTYPE TCR8_CloseDevice(TCR8HANDLE h);
+DLLAPI BOOL CALLTYPE TCR8_Run(TCR8HANDLE h);
+DLLAPI BOOL CALLTYPE TCR8_Suspend(TCR8HANDLE h); 
+DLLAPI BOOL CALLTYPE TCR8_EjectCard(TCR8HANDLE h, int nChannel );
+DLLAPI BOOL CALLTYPE TCR8_ForceEjectCard( TCR8HANDLE h, int nChannel );
+DLLAPI BOOL CALLTYPE TCR8_RecycleCard(TCR8HANDLE h);
+DLLAPI BOOL CALLTYPE TCR8_ForceRecycleCard( TCR8HANDLE h, int nChannel );
+DLLAPI BOOL CALLTYPE TCR8_CancelButton(TCR8HANDLE h);
+DLLAPI BOOL CALLTYPE TCR8_SwitchChannel(TCR8HANDLE h, int nChannel );
+DLLAPI BOOL CALLTYPE TCR8_SwitchAntenna(TCR8HANDLE h, int nAnt );
+DLLAPI BOOL CALLTYPE TCR8_ReturnCard( TCR8HANDLE h, int nChannel );
+DLLAPI BOOL CALLTYPE TCR8_CollectCard( TCR8HANDLE h, int nChannel );
+DLLAPI BOOL CALLTYPE TCR8_TriggerButton( TCR8HANDLE h, int nChannel );
+DLLAPI BOOL CALLTYPE TCR8_PullBackToAnt( TCR8HANDLE h, int nChannel ); 
+DLLAPI BOOL CALLTYPE TCR8_SetCartridgeInfo( TCR8HANDLE h, int nChannel, DWORD dwSN, int nCount );
+DLLAPI BOOL CALLTYPE TCR8_EnableLog( TCR8HANDLE h, LPCTSTR strPath );		// if strPath is NULL means disable.
+DLLAPI BOOL CALLTYPE TCR8_EnableKernelLog( TCR8HANDLE h, BOOL bEnable );
+DLLAPI BOOL CALLTYPE TCR8_Log(TCR8HANDLE h, LPCTSTR fmt,...);
+DLLAPI LPCTSTR CALLTYPE TCR8_GetEventText( int nEventId, int nParam );
+DLLAPI LPCTSTR CALLTYPE TCR8_GetTransStateText(int st);
+DLLAPI LPCTSTR CALLTYPE TCR8_GetButtonIgnoreText( int code );
+DLLAPI BOOL CALLTYPE TCR8_PlayAudio(TCR8HANDLE h, int nIndex );
 
 #ifdef __cplusplus
 }
@@ -333,6 +341,6 @@ BOOL TCR8_PlayAudio(TCR8HANDLE h, int nIndex );
 #define ERR_COMM		2		// Offline
 #define ERR_FAIL		3		// Machine internal failure
 #define ERR_BOX			4		// Cartridge failure
-
-
+ 
 #endif
+

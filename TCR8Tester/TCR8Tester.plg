@@ -1,0 +1,63 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: TCR8Tester - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x804 /fo"Debug/TCR8Tester.res" /d "_DEBUG" /d "_AFXDLL" "F:\du\work\CardProgram\上位机程序\测试程序及动态库\TCR8Lib_DLL_AndTester\TCR8Tester\TCR8Tester.rc"" 
+Creating temporary file "D:\Users\Temp\RSP4A97.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR"Debug/" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"F:\du\work\CardProgram\上位机程序\测试程序及动态库\TCR8Lib_DLL_AndTester\TCR8Tester\ProtocolViewer.cpp"
+"F:\du\work\CardProgram\上位机程序\测试程序及动态库\TCR8Lib_DLL_AndTester\TCR8Tester\SetBoxInfo.cpp"
+"F:\du\work\CardProgram\上位机程序\测试程序及动态库\TCR8Lib_DLL_AndTester\TCR8Tester\TCR8LogViewer.cpp"
+"F:\du\work\CardProgram\上位机程序\测试程序及动态库\TCR8Lib_DLL_AndTester\TCR8Tester\TCR8Tester.cpp"
+"F:\du\work\CardProgram\上位机程序\测试程序及动态库\TCR8Lib_DLL_AndTester\TCR8Tester\TCR8TesterDlg.cpp"
+"F:\du\work\CardProgram\上位机程序\测试程序及动态库\TCR8Lib_DLL_AndTester\TCR8Tester\TextProgressBar.cpp"
+]
+Creating command line "cl.exe @D:\Users\Temp\RSP4A97.tmp" 
+Creating temporary file "D:\Users\Temp\RSP4A98.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR"Debug/" /Fp"Debug/TCR8Tester.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"F:\du\work\CardProgram\上位机程序\测试程序及动态库\TCR8Lib_DLL_AndTester\TCR8Tester\StdAfx.cpp"
+]
+Creating command line "cl.exe @D:\Users\Temp\RSP4A98.tmp" 
+Creating temporary file "D:\Users\Temp\RSP4A99.tmp" with contents
+[
+../TCR8Lib/Debug/TCR8Lib.lib ws2_32.lib /nologo /subsystem:windows /incremental:yes /pdb:"Debug/TCR8LibTester.pdb" /debug /machine:I386 /out:"Debug/TCR8LibTester.exe" /pdbtype:sept 
+".\Debug\ProtocolViewer.obj"
+".\Debug\SetBoxInfo.obj"
+".\Debug\StdAfx.obj"
+".\Debug\TCR8LogViewer.obj"
+".\Debug\TCR8Tester.obj"
+".\Debug\TCR8TesterDlg.obj"
+".\Debug\TextProgressBar.obj"
+".\Debug\TCR8Tester.res"
+]
+Creating command line "link.exe @D:\Users\Temp\RSP4A99.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+StdAfx.cpp
+Compiling...
+ProtocolViewer.cpp
+SetBoxInfo.cpp
+TCR8LogViewer.cpp
+TCR8Tester.cpp
+TCR8TesterDlg.cpp
+TextProgressBar.cpp
+Generating Code...
+Linking...
+Creating command line "bscmake.exe /nologo /o"Debug/TCR8Tester.bsc"  ".\Debug\StdAfx.sbr" ".\Debug\ProtocolViewer.sbr" ".\Debug\SetBoxInfo.sbr" ".\Debug\TCR8LogViewer.sbr" ".\Debug\TCR8Tester.sbr" ".\Debug\TCR8TesterDlg.sbr" ".\Debug\TextProgressBar.sbr""
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+TCR8LibTester.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

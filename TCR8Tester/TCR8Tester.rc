@@ -1,0 +1,345 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Chinese (P.R.C.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 4, 2\r\n"
+    "#pragma code_page(936)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\TCR8Tester.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""l.chs\\afxres.rc""          // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\TCR8Tester.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_TCR8TESTER_DIALOG DIALOGEX 0, 0, 489, 284
+STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "TCR8Tester"
+FONT 9, "宋体"
+BEGIN
+    PUSHBUTTON      "确定",IDOK,373,263,50,14,NOT WS_VISIBLE | WS_DISABLED | 
+                    NOT WS_TABSTOP
+    PUSHBUTTON      "关闭",IDCANCEL,435,263,50,14
+    RTEXT           "串口:",IDC_STATIC,222,10,24,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_COMBO_COMNUM,251,10,44,94,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "打开",IDC_BUTTON_OPENCOM,303,6,37,16
+    PUSHBUTTON      "关闭",IDC_BUTTON_CLOSECOM,349,6,37,16
+    RTEXT           "波特率:",IDC_STATIC,108,9,31,13,SS_CENTERIMAGE
+    CONTROL         "9600",IDC_RADIO_9600,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,144,8,31,14
+    CONTROL         "19200",IDC_RADIO_19200,"Button",BS_AUTORADIOBUTTON,183,
+                    10,34,12
+    CONTROL         "List1",IDC_LIST_EVT,"SysListView32",LVS_REPORT | 
+                    WS_BORDER | WS_TABSTOP,242,44,233,164
+    GROUPBOX        "卡机事件",IDC_STATIC,237,34,246,180
+    PUSHBUTTON      "运行",IDC_BUTTON_RUN,395,6,37,16
+    PUSHBUTTON      "暂停",IDC_BUTTON_SUSPEND,445,6,37,16
+    GROUPBOX        "通道状态",IDC_STATIC,4,35,230,155
+    LTEXT           "1#",IDC_STATIC_CH1,30,62,24,27,WS_BORDER
+    LTEXT           "卡盒SN",IDC_STATIC,64,46,29,11
+    LTEXT           "卡盒卡数",IDC_STATIC,109,45,33,11
+    LTEXT           "通道",IDC_STATIC,30,46,20,9
+    LTEXT           "2#",IDC_STATIC_CH2,30,93,24,27,WS_BORDER
+    LTEXT           "3#",IDC_STATIC_CH3,30,124,24,27,WS_BORDER
+    LTEXT           "4#",IDC_STATIC_CH4,30,155,24,27,WS_BORDER
+    CONTROL         "Progress1",IDC_PROGRESS_BOX1,"msctls_progress32",
+                    PBS_SMOOTH | WS_BORDER,100,69,52,13
+    CONTROL         "Progress2",IDC_PROGRESS_BOX2,"msctls_progress32",
+                    PBS_SMOOTH | WS_BORDER,100,100,52,13
+    CONTROL         "Progress3",IDC_PROGRESS_BOX3,"msctls_progress32",
+                    PBS_SMOOTH | WS_BORDER,100,130,52,13
+    CONTROL         "Progress4",IDC_PROGRESS_BOX4,"msctls_progress32",
+                    PBS_SMOOTH | WS_BORDER,100,163,52,13
+    EDITTEXT        IDC_EDIT_BOX1SN,59,67,37,14,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT_BOX2SN,59,98,37,14,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT_BOX3SN,59,129,37,14,ES_AUTOHSCROLL | 
+                    ES_READONLY
+    EDITTEXT        IDC_EDIT_BOX4SN,59,163,37,14,ES_AUTOHSCROLL | 
+                    ES_READONLY
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,4,27,481,1
+    LTEXT           "Static",IDC_STATIC_READER1,154,63,34,23,WS_BORDER
+    LTEXT           "Static",IDC_STATIC_READER2,154,95,34,23,WS_BORDER
+    LTEXT           "Static",IDC_STATIC_READER3,154,125,34,23,WS_BORDER
+    LTEXT           "Static",IDC_STATIC_READER4,154,158,34,23,WS_BORDER
+    LTEXT           "Static",IDC_STATIC_EXIT1,193,63,34,23,WS_BORDER
+    LTEXT           "Static",IDC_STATIC_EXIT2,193,95,34,23,WS_BORDER
+    LTEXT           "Static",IDC_STATIC_EXIT3,193,125,34,23,WS_BORDER
+    LTEXT           "Static",IDC_STATIC_EXIT4,194,158,34,23,WS_BORDER
+    LTEXT           "天线",IDC_STATIC,161,45,20,11
+    LTEXT           "卡口",IDC_STATIC,200,45,20,11
+    CONTROL         "1",IDC_RADIO_CH1,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
+                    17,209,19,10
+    CONTROL         "2",IDC_RADIO_CH2,"Button",BS_AUTORADIOBUTTON,56,207,20,
+                    10
+    CONTROL         "3",IDC_RADIO_CH3,"Button",BS_AUTORADIOBUTTON,99,207,18,
+                    10
+    CONTROL         "4",IDC_RADIO_CH4,"Button",BS_AUTORADIOBUTTON,141,208,19,
+                    10
+    PUSHBUTTON      "设置卡盒信息",IDC_BUTTON_SETBOXINFO,106,249,64,18
+    PUSHBUTTON      "发卡",IDC_BUTTON_EJECT,7,223,40,18
+    PUSHBUTTON      "回收卡",IDC_BUTTON_RECYCLE,56,223,40,18
+    PUSHBUTTON      "取消按键",IDC_BUTTON_CANCELBUTTON,106,224,40,18
+    PUSHBUTTON      "切换通道",IDC_BUTTON_SWITCH_CHENNAL,7,250,40,18
+    PUSHBUTTON      "切换天线",IDC_BUTTON_SWITCH_ANT,56,250,40,18
+    GROUPBOX        "卡机操作",IDC_STATIC,4,196,229,81
+    CONTROL         "",IDC_STATIC_UPPER1,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_BORDER,11,67,12,13
+    CONTROL         "",IDC_STATIC_UPPER2,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_BORDER,11,99,12,13
+    CONTROL         "",IDC_STATIC_LOWER1,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_BORDER,11,131,12,13
+    CONTROL         "",IDC_STATIC_LOWER2,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_BORDER,11,163,12,13
+    PUSHBUTTON      "查看协议",IDC_BUTTON_VIEWPROTOCOL,406,218,51,17
+    PUSHBUTTON      "查看卡机日志",IDC_BUTTON_VIEWTCR8LOG,330,218,57,17
+    EDITTEXT        IDC_EDIT_FIRM_VER,241,233,74,15,ES_AUTOHSCROLL
+    PUSHBUTTON      "获取版本号",IDC_BUTTON_GETFIRMVER,247,253,68,17
+    CONTROL         "发卡机",IDC_RADIO_DISPENSER,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,5,9,36,13
+    CONTROL         "收卡机",IDC_RADIO_COLLECTOR,"Button",BS_AUTORADIOBUTTON,
+                    47,9,35,13
+    PUSHBUTTON      "拉回卡口卡",IDC_BUTTON_PULLBACK,155,224,57,18
+    PUSHBUTTON      "触发按键",IDC_BUTTON_TRIGGERBUTTON,181,250,40,18
+END
+
+IDD_DIALOG_SETBOXINFO DIALOG DISCARDABLE  0, 0, 179, 130
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "SetBoxInfo"
+FONT 10, "System"
+BEGIN
+    DEFPUSHBUTTON   "设置",IDOK,35,105,50,14
+    PUSHBUTTON      "取消",IDCANCEL,103,105,50,14
+    LTEXT           "卡盒SN:",IDC_STATIC,7,11,35,10
+    LTEXT           "卡盒容量:",IDC_STATIC,7,33,35,10
+    LTEXT           "卡盒卡数:",IDC_STATIC,8,54,35,10
+    EDITTEXT        IDC_EDIT_BOXSN,47,10,51,15,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_BOXCAP,47,32,51,15,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_CARDCNT,47,52,51,15,ES_AUTOHSCROLL
+END
+
+IDD_DIALOG_PROTOCOLVIEW DIALOG DISCARDABLE  0, 0, 244, 161
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "ProtocolViewer"
+FONT 10, "System"
+BEGIN
+    CONTROL         "List1",IDC_LIST_PROTOCOL,"SysListView32",LVS_REPORT | 
+                    WS_BORDER | WS_TABSTOP,12,12,222,123
+    CONTROL         "暂停滚动",IDC_CHECK_PAUSEROLL,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,22,143,43,11
+END
+
+IDD_DIALOG_TCR8LOGVIEWER DIALOG DISCARDABLE  0, 0, 255, 155
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "TCR8Log"
+FONT 10, "System"
+BEGIN
+    CONTROL         "List1",IDC_LIST_TCR8LOG,"SysListView32",LVS_REPORT | 
+                    WS_BORDER | WS_TABSTOP,10,9,238,116
+    CONTROL         "暂停滚动",IDC_CHECK_PAUSEROLL,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,14,132,45,14
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404B0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "TCR8Tester Microsoft 基础类应用程序\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "TCR8Tester\0"
+            VALUE "LegalCopyright", "版权所有 (C) 2013\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "TCR8Tester.EXE\0"
+            VALUE "ProductName", "TCR8Tester 应用程序\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_TCR8TESTER_DIALOG DLGINIT
+BEGIN
+    IDC_COMBO_COMNUM, 0x403, 5, 0
+0x4f43, 0x314d, "\000" 
+    IDC_COMBO_COMNUM, 0x403, 5, 0
+0x4f43, 0x324d, "\000" 
+    IDC_COMBO_COMNUM, 0x403, 5, 0
+0x4f43, 0x334d, "\000" 
+    IDC_COMBO_COMNUM, 0x403, 5, 0
+0x4f43, 0x344d, "\000" 
+    IDC_COMBO_COMNUM, 0x403, 5, 0
+0x4f43, 0x354d, "\000" 
+    IDC_COMBO_COMNUM, 0x403, 5, 0
+0x4f43, 0x364d, "\000" 
+    IDC_COMBO_COMNUM, 0x403, 5, 0
+0x4f43, 0x374d, "\000" 
+    IDC_COMBO_COMNUM, 0x403, 5, 0
+0x4f43, 0x384d, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP_READER       BITMAP  DISCARDABLE     "res\\Reader_64X48.bmp"
+IDB_BITMAP_CARDONREADER BITMAP  DISCARDABLE     "res\\CardOnReader_64X48.bmp"
+IDB_BITMAP_EXIT         BITMAP  DISCARDABLE     "res\\CSCExit1_64X38.bmp"
+IDB_BITMAP_CARDONEXIT   BITMAP  DISCARDABLE     "res\\CSCOnExit1_64X38.bmp"
+IDB_BITMAP_OK1          BITMAP  DISCARDABLE     "res\\1_G_54X50.bmp"
+IDB_BITMAP_NG1          BITMAP  DISCARDABLE     "res\\1_R_54X50.bmp"
+IDB_BITMAP_OK2          BITMAP  DISCARDABLE     "res\\2_G_54X50.bmp"
+IDB_BITMAP_NG2          BITMAP  DISCARDABLE     "res\\2_R_54X50.bmp"
+IDB_BITMAP_OK3          BITMAP  DISCARDABLE     "res\\3_G_54X50.bmp"
+IDB_BITMAP_NG3          BITMAP  DISCARDABLE     "res\\3_R_54X50.bmp"
+IDB_BITMAP_OK4          BITMAP  DISCARDABLE     "res\\4_G_54X50.bmp"
+IDB_BITMAP_NG4          BITMAP  DISCARDABLE     "res\\4_R_54X50.bmp"
+IDB_BITMAP_ACTIVE       BITMAP  DISCARDABLE     "res\\bitmap_a.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DIALOG_SETBOXINFO, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 177
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 127
+    END
+
+    IDD_DIALOG_PROTOCOLVIEW, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 160
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Chinese (P.R.C.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE 4, 2
+#pragma code_page(936)
+#endif //_WIN32
+#include "res\TCR8Tester.rc2"  // non-Microsoft Visual C++ edited resources
+#include "l.chs\afxres.rc"          // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

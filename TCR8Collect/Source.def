@@ -1,0 +1,21 @@
+EXPORTS
+	ACC_OpenDevice	@1
+	ACC_SetEventCallBack	@2
+	ACC_CloseDevice	@3
+	ACC_CollectCard	@4
+	ACC_RecycleCard	@5
+	ACC_ReturnCard	@6
+	ACC_SwitchAntenna	@7
+	ACC_IsOnline	@8
+	ACC_ForceReturn	@9
+	ACC_ForceRecycle	@10
+	ACC_GetFirmwareVer	@11
+	ACC_SetBoxSN	@12
+	ACC_GetBoxSN	@13
+	ACC_SetCardCounter	@14
+	ACC_GetCardCounter	@15
+	ACC_GetChannelState	@16
+	ACC_IsBoxLoad     	@17
+	ACC_GetTxData	@18
+	ACC_GetRxData	@19
+	ACC_GetKernelLog	@20

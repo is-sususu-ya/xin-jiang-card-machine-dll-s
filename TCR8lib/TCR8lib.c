@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <time.h> 
 #include <errno.h> 
+
 #include "TCR8lib.h"
  
 #ifdef linux
@@ -33,6 +34,8 @@
 #define GetLastError()		strerror(errno)
 #define Sleep(n)			usleep( n * 1000) 
 #else 
+#pragma comment(lib,"ws2_32.lib");
+#pragma comment(lib,"Gdi32.lib");
 #endif
 
 #ifdef linux
@@ -121,8 +124,7 @@ static void ProtocolThread(void *lpParameter);
 #else
 static DWORD WINAPI ProtocolThread(LPVOID lpParameter);
 #endif
-
-TCR8HANDLE TCR8_Create()
+DLLAPI TCR8HANDLE CALLTYPE TCR8_Create()
 {
 	int i;
 	TCR8HANDLE h  = malloc( sizeof(TCR8Obj) );
@@ -150,7 +152,7 @@ TCR8HANDLE TCR8_Create()
 	return h;
 }
 
-void TCR8_Destroy(TCR8HANDLE h)
+DLLAPI void CALLTYPE TCR8_Destroy(TCR8HANDLE h)
 {
 	if( !_IsValidHandle(h) )
 		return; 
@@ -166,7 +168,7 @@ void TCR8_Destroy(TCR8HANDLE h)
 }
 
 #ifdef linux
-BOOL TCR8_SetComPort( TCR8HANDLE h, const char *dev_name, int nBaudrate )
+DLLAPI BOOL CALLTYPE  TCR8_SetComPort( TCR8HANDLE h, const char *dev_name, int nBaudrate )
 {
 	if( !_IsValidHandle(h) )
 		return FALSE;
@@ -179,7 +181,7 @@ BOOL TCR8_SetComPort( TCR8HANDLE h, const char *dev_name, int nBaudrate )
 	return FALSE;
 }
 #else
-BOOL TCR8_SetComPort( TCR8HANDLE h, int nPort, int nBaudrate )
+DLLAPI BOOL CALLTYPE  TCR8_SetComPort( TCR8HANDLE h, int nPort, int nBaudrate )
 {
 	if( !_IsValidHandle(h) )
 		return FALSE; 
@@ -193,7 +195,7 @@ BOOL TCR8_SetComPort( TCR8HANDLE h, int nPort, int nBaudrate )
 }
 #endif
 
-BOOL TCR8_SetCallback( TCR8HANDLE h, void (*cb)( void *, int, int) )
+DLLAPI BOOL CALLTYPE  TCR8_SetCallback( TCR8HANDLE h, void (*cb)( void *, int, int) )
 {
 	if( !_IsValidHandle(h) )
 		return FALSE;
@@ -202,7 +204,7 @@ BOOL TCR8_SetCallback( TCR8HANDLE h, void (*cb)( void *, int, int) )
 	return TRUE;
 }
 
-BOOL TCR8_OpenDevice(TCR8HANDLE h)
+DLLAPI BOOL CALLTYPE  TCR8_OpenDevice(TCR8HANDLE h)
 {
 	DWORD dwThreadId; 
 	if( !_IsValidHandle(h) )
@@ -292,7 +294,7 @@ BOOL TCR8_OpenDevice(TCR8HANDLE h)
 #endif
 }
 
-BOOL TCR8_OpenDeviceNet(TCR8HANDLE h, const char *chIP)
+DLLAPI BOOL CALLTYPE  TCR8_OpenDeviceNet(TCR8HANDLE h, const char *chIP)
 {
 	DWORD dwThreadId; 
 	if( !_IsValidHandle(h) )
@@ -361,7 +363,7 @@ BOOL TCR8_OpenDeviceNet(TCR8HANDLE h, const char *chIP)
 #endif
 }
 
-BOOL TCR8_CloseDevice(TCR8HANDLE h)
+DLLAPI BOOL CALLTYPE  TCR8_CloseDevice(TCR8HANDLE h)
 {
 	int i;
 
@@ -405,7 +407,7 @@ BOOL TCR8_CloseDevice(TCR8HANDLE h)
 	return TRUE;
 }
 
-BOOL TCR8_Run(TCR8HANDLE h)
+DLLAPI BOOL CALLTYPE  TCR8_Run(TCR8HANDLE h)
 {
 	if( !_IsValidHandle(h) )
 		return FALSE; 
@@ -418,7 +420,7 @@ BOOL TCR8_Run(TCR8HANDLE h)
 	return FALSE;
 }
 
-BOOL TCR8_Suspend(TCR8HANDLE h)
+DLLAPI BOOL CALLTYPE  TCR8_Suspend(TCR8HANDLE h)
 {
 	if( !_IsValidHandle(h) )
 		return FALSE;
@@ -430,7 +432,7 @@ BOOL TCR8_Suspend(TCR8HANDLE h)
 	return FALSE;
 }
 
-BOOL TCR8_SetCartridgeInfo( TCR8HANDLE h, int nChannel, DWORD dwSN, int nCounter )
+DLLAPI BOOL CALLTYPE  TCR8_SetCartridgeInfo( TCR8HANDLE h, int nChannel, DWORD dwSN, int nCounter )
 {
 	BOOL  rc = FALSE;
 
@@ -455,7 +457,7 @@ BOOL TCR8_SetCartridgeInfo( TCR8HANDLE h, int nChannel, DWORD dwSN, int nCounter
 	return rc;
 }
 
-BOOL TCR8_EjectCard(TCR8HANDLE h, int nChannel )
+DLLAPI BOOL CALLTYPE  TCR8_EjectCard(TCR8HANDLE h, int nChannel )
 {
 	char cmd[8] = "<xb0>";
 	BOOL bRC;
@@ -482,7 +484,7 @@ BOOL TCR8_EjectCard(TCR8HANDLE h, int nChannel )
 	return bRC;
 }
 
-BOOL TCR8_ForceEjectCard( TCR8HANDLE h, int nChannel )
+DLLAPI BOOL CALLTYPE  TCR8_ForceEjectCard( TCR8HANDLE h, int nChannel )
 {
 	char cmd[8] = "<xm0>";
 	BOOL bRC;
@@ -504,7 +506,7 @@ BOOL TCR8_ForceEjectCard( TCR8HANDLE h, int nChannel )
 	return bRC;
 }
 
-BOOL TCR8_RecycleCard(TCR8HANDLE h)
+DLLAPI BOOL CALLTYPE  TCR8_RecycleCard(TCR8HANDLE h)
 {
 	char cmd[8] = "<xc0>";
 	BOOL bRC;
@@ -536,7 +538,7 @@ BOOL TCR8_RecycleCard(TCR8HANDLE h)
 	return bRC;
 }
 
-BOOL TCR8_ForceRecycleCard( TCR8HANDLE h, int nChannel )
+DLLAPI BOOL CALLTYPE  TCR8_ForceRecycleCard( TCR8HANDLE h, int nChannel )
 {
 	char cmd[8] = "<xn0>";
 	BOOL bRC;
@@ -558,7 +560,7 @@ BOOL TCR8_ForceRecycleCard( TCR8HANDLE h, int nChannel )
 	return bRC;
 }
 
-BOOL TCR8_CancelButton(TCR8HANDLE h)
+DLLAPI BOOL CALLTYPE  TCR8_CancelButton(TCR8HANDLE h)
 {
 	char cmd[8] = "<xg>";
 	BOOL bRC;
@@ -587,7 +589,7 @@ BOOL TCR8_CancelButton(TCR8HANDLE h)
 	return bRC;
 }
 
-BOOL TCR8_ReturnCard( TCR8HANDLE h, int nChannel )
+DLLAPI BOOL CALLTYPE  TCR8_ReturnCard( TCR8HANDLE h, int nChannel )
 {
 	char cmd[8] = "<xc0>";
 	BOOL bRC;
@@ -615,7 +617,7 @@ BOOL TCR8_ReturnCard( TCR8HANDLE h, int nChannel )
 	return bRC;
 }
 
-BOOL TCR8_CollectCard( TCR8HANDLE h, int nChannel )
+DLLAPI BOOL CALLTYPE  TCR8_CollectCard( TCR8HANDLE h, int nChannel )
 {
 	char cmd[8] = "<xd0>";
 	BOOL bRC;
@@ -641,7 +643,7 @@ BOOL TCR8_CollectCard( TCR8HANDLE h, int nChannel )
 	return bRC;
 }
 
-BOOL TCR8_SwitchChannel(TCR8HANDLE h, int nChannel )
+DLLAPI BOOL CALLTYPE  TCR8_SwitchChannel(TCR8HANDLE h, int nChannel )
 {
 	char	cmd[8] = "<xi#>";
 	BOOL bRC;
@@ -668,7 +670,7 @@ BOOL TCR8_SwitchChannel(TCR8HANDLE h, int nChannel )
 	return bRC;
 }
 
-BOOL TCR8_SwitchAntenna(TCR8HANDLE h, int nAnt )
+DLLAPI BOOL CALLTYPE  TCR8_SwitchAntenna(TCR8HANDLE h, int nAnt )
 {
 	char	cmd[8] = "<xh#>";
 	BOOL bRC;
@@ -695,7 +697,7 @@ BOOL TCR8_SwitchAntenna(TCR8HANDLE h, int nAnt )
 	return bRC;
 }
 
-BOOL TCR8_PlayAudio(TCR8HANDLE h, int nIndex )
+DLLAPI BOOL CALLTYPE  TCR8_PlayAudio(TCR8HANDLE h, int nIndex )
 {
 	char	cmd[8] = "<xd##>";
 	BOOL bRC;
@@ -722,7 +724,7 @@ BOOL TCR8_PlayAudio(TCR8HANDLE h, int nIndex )
 	return bRC;
 }
 
-BOOL TCR8_TriggerButton( TCR8HANDLE h, int nChannel )
+DLLAPI BOOL CALLTYPE  TCR8_TriggerButton( TCR8HANDLE h, int nChannel )
 {
 	char	cmd[8] = "<xl#>";
 	BOOL bRC;
@@ -767,7 +769,7 @@ BOOL TCR8_TriggerButton( TCR8HANDLE h, int nChannel )
 	return bRC;
 }
 
-BOOL TCR8_PullBackToAnt( TCR8HANDLE h, int nChannel )
+DLLAPI BOOL CALLTYPE  TCR8_PullBackToAnt( TCR8HANDLE h, int nChannel )
 {
 	char	cmd[] = "<xp0000>";
 	BOOL bRC;
@@ -796,7 +798,7 @@ BOOL TCR8_PullBackToAnt( TCR8HANDLE h, int nChannel )
 	return bRC;
 }
 
-BOOL TCR8_EnableKernelLog( TCR8HANDLE h, BOOL bEnable )
+DLLAPI BOOL CALLTYPE  TCR8_EnableKernelLog( TCR8HANDLE h, BOOL bEnable )
 {
 	char cmd[] = "<xux>";
 	BOOL bRC; 
@@ -814,7 +816,7 @@ BOOL TCR8_EnableKernelLog( TCR8HANDLE h, BOOL bEnable )
 	return bRC;
 }
 
-BOOL TCR8_EnableLog( TCR8HANDLE h, LPCTSTR strPath )
+DLLAPI BOOL CALLTYPE  TCR8_EnableLog( TCR8HANDLE h, LPCTSTR strPath )
 {
 #ifdef linux
 
@@ -850,9 +852,9 @@ BOOL TCR8_EnableLog( TCR8HANDLE h, LPCTSTR strPath )
 }
 
 #ifdef linux
-BOOL TCR8_Log( TCR8HANDLE h, const char *fmt, ... )
+DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, const char *fmt, ... )
 #else
-BOOL TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
+DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 #endif
 {
 #ifdef linux 
@@ -914,7 +916,7 @@ BOOL TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 	return TRUE;		
 }
 
-LPCTSTR TCR8_GetButtonIgnoreText( int code )
+ DLLAPI LPCTSTR CALLTYPE  TCR8_GetButtonIgnoreText( int code )
 {
 	switch( code )
 	{
@@ -931,7 +933,7 @@ LPCTSTR TCR8_GetButtonIgnoreText( int code )
 	return "Unknown";
 }
 
-LPCTSTR TCR8_GetTransStateText( int st )
+ DLLAPI LPCTSTR CALLTYPE TCR8_GetTransStateText( int st )
 {
 	TRState smTrans = (TRState)st;
 	switch( smTrans )
@@ -950,7 +952,7 @@ LPCTSTR TCR8_GetTransStateText( int st )
 	return "Unknown";	
 }
 
-LPCTSTR TCR8_GetEventText( int nEventId, int nParam )
+ DLLAPI LPCTSTR CALLTYPE TCR8_GetEventText( int nEventId, int nParam )
 {
 	static char buf[64];
 	switch ( nEventId )
@@ -1137,7 +1139,7 @@ LPCTSTR TCR8_GetMultiBoxEventText( int nEventCode )
 	return ptr;
 }
 
-LPCTSTR TCR8_GetAntennaEventText( int nEventCode )
+DLLAPI LPCTSTR CALLTYPE TCR8_GetAntennaEventText( int nEventCode )
 {
 	char *ptr;
 
@@ -3136,14 +3138,14 @@ static int GetTime2Resend(TCR8HANDLE h)
 }
 
 
-BOOL TCR8_IsOnline( TCR8HANDLE h )
+DLLAPI BOOL CALLTYPE  TCR8_IsOnline( TCR8HANDLE h )
 {
 	if( !_IsValidHandle(h) )
 		return 0;
 	return h->m_bOnline;
 }
 
-BOOL TCR8_GetCartridgeSN( TCR8HANDLE h, int i )
+DLLAPI BOOL CALLTYPE  TCR8_GetCartridgeSN( TCR8HANDLE h, int i )
 {
 	if( !_IsValidHandle(h) )
 		return 0;
@@ -3151,7 +3153,7 @@ BOOL TCR8_GetCartridgeSN( TCR8HANDLE h, int i )
 }
 
 
-BOOL TCR8_IsCardOnAntenna( TCR8HANDLE tcr8, int i )
+DLLAPI BOOL CALLTYPE  TCR8_IsCardOnAntenna( TCR8HANDLE tcr8, int i )
 {
 	if( !_IsValidHandle(tcr8) )
 		return 0;
@@ -3159,14 +3161,14 @@ BOOL TCR8_IsCardOnAntenna( TCR8HANDLE tcr8, int i )
 }
 
 
-BOOL TCR8_GetChannelCount( TCR8HANDLE tcr8, int i )
+DLLAPI BOOL CALLTYPE  TCR8_GetChannelCount( TCR8HANDLE tcr8, int i )
 {
 	if( !_IsValidHandle(tcr8) )
 		return 0;
 	return (tcr8)->m_iCounter[i] ;
 }
 
-BOOL TCR8_GetChannelState( TCR8HANDLE tcr8 , int i)
+DLLAPI BOOL CALLTYPE  TCR8_GetChannelState( TCR8HANDLE tcr8 , int i)
 {
 	if( !_IsValidHandle(tcr8) )
 		return 0;
@@ -3174,7 +3176,7 @@ BOOL TCR8_GetChannelState( TCR8HANDLE tcr8 , int i)
 }
 
 
-BOOL TCR8_GetActive( TCR8HANDLE tcr8, int n )
+DLLAPI BOOL CALLTYPE  TCR8_GetActive( TCR8HANDLE tcr8, int n )
 {
 	if( !_IsValidHandle(tcr8) )
 		return 0;
@@ -3182,7 +3184,7 @@ BOOL TCR8_GetActive( TCR8HANDLE tcr8, int n )
 }
 
 
-BOOL TCR8_HasCartridge( TCR8HANDLE tcr8, int i )
+DLLAPI BOOL CALLTYPE  TCR8_HasCartridge( TCR8HANDLE tcr8, int i )
 {
 	if( !_IsValidHandle(tcr8) )
 		return 0;
@@ -3190,7 +3192,7 @@ BOOL TCR8_HasCartridge( TCR8HANDLE tcr8, int i )
 }
 
 
-BOOL TCR8_GetKernelVersion( TCR8HANDLE tcr8 )
+DLLAPI BOOL CALLTYPE  TCR8_GetKernelVersion( TCR8HANDLE tcr8 )
 {
 	if( !_IsValidHandle(tcr8) )
 		return 0;
