@@ -9,7 +9,7 @@ ifeq ($(SET), xinjiang)
 TAIL=_arm
 CC=/work/toolchain_R2_EABI/usr/bin/arm-none-linux-gnueabi-gcc
 else ifeq ($(SET), hisi)
-TAIL=
+TAIL=_hisi
 CC=arm-hisiv100nptl-linux-gcc
 else ifeq ($(SET), pc)
 TAIL=_x86
