@@ -1,5 +1,5 @@
 
 #  切换使用哪个编译器
-CC=arm-hisiv100nptl-linux-gcc
+#CC=arm-hisiv100nptl-linux-gcc
 #CC=gcc 
-#CC=/work/toolchain_R2_EABI/usr/bin/arm-none-linux-gnueabi-gcc
+CC=/work/toolchain_R2_EABI/usr/bin/arm-none-linux-gnueabi-gcc
