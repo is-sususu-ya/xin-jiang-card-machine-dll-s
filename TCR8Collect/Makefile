@@ -11,7 +11,6 @@ OBJ=$(SRC:%.c=%.o)
 all : $(AIM)
 $(AIM) : $(OBJ)
 	$(CC) -shared -o $@ $^ $(LFLAGS)
-	@cp $@ /nfsroot/work 	
 
 $(OBJ) : %.o:%.c
 	$(CC) $(CFLAGS) -c $^ -o $@
