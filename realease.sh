@@ -7,6 +7,7 @@ for list in $root_dir/TCR8Collect/  $root_dir/TCR8SendCard/
 do 
 	cd $root_dir
 	cd $list
+	rm lib*.so
 	make cc
 	make SET=xinjiang
 	make cc
