@@ -1,10 +1,9 @@
-
+include ../../Makefile.param
 LFLAGS=-lpthread -lm -lrt
 CFLAGS:=-g -I. 
-AIM=demo
+AIM=sdemo
 SRC=$(wildcard ./*.c)
 OBJ=$(SRC:%.c=%.o) 
-CC=gcc
  
 all : $(AIM)
 $(AIM) : $(OBJ)

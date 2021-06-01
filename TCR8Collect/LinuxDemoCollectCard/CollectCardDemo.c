@@ -44,14 +44,31 @@ typedef int   (*_ACC_GetKernelLog)(char *buf, int size);
     _##name name = NULL;\
     name = (_##name)dlsym(lib, #name );\
     if (!name) { fprintf(stderr, "resolve error 【%s】%s\n", #name, dlerror()); exit(0); }else{fprintf(stdout,"resolve 【%s】 success \r\n", #name );}
-
-
+ 
 static void onACCEvet(int code, int param )
 {
-    printf("消息处理,具体消息处理见 苏州朗为无人值守收卡机动态库使用说明V1.0.pfd 文件 第1页 卡机事件和事件参数 表部分！\r\n");
+    // printf("消息处理,具体消息处理见 苏州朗为无人值守收卡机动态库使用说明V1.0.pfd 文件 第1页 卡机事件和事件参数 表部分！\r\n");
+    printf("收卡机事件号：%d - 参数：%d \r\n", code, param );
+    unsigned int status;
     switch( code )
     {
         case 1: printf("核心板复位上电\r\n"); break;
+        case 7: 
+        ACC_GetChannelState(param, &status ); 
+        if( status & 0x01 )
+        {
+            // 天线处有卡。。
+        }else if(status & 0x2 )
+        {
+            // 卡口有卡
+        }
+        // other
+
+        break;
+        // 根据业务需要，依据事件号做不同的处理
+        default：
+
+        break;
     }
 }
  
@@ -59,7 +76,6 @@ int main(int argc, char const *argv[])
 {
     /* 加载并解析所有接口 */
     char buf[32];
-    HANDLE hCM = NULL;
     HANDLE lib = dlopen("libTCR8ACC.so", RTLD_LAZY );
     LoadFuction(ACC_OpenDevice);
     LoadFuction(ACC_SetEventCallBack);
@@ -83,7 +99,14 @@ int main(int argc, char const *argv[])
     LoadFuction(ACC_GetKernelLog); 
 
     /** 尝试打开设备 **/
-    hCM = ACC_OpenDevice("/dev/ttyAMA1", 9600 );
+    HANDLE hCM = NULL; // 
+	const char *dev = "/dev/ttyAMA2";
+	int bd = 9600;
+	if( argc >= 2 )
+		dev = strdup( argv[1] );
+	if( argc >= 3 )
+		bd = atoi( argv[2] );
+    hCM = ACC_OpenDevice(dev, bd );
     if( !hCM )
     {
         printf("连接收卡机失败！\r\n");

@@ -109,7 +109,7 @@ static int SendAck( TCR8HANDLE h, char cseq );
 static int SendNak( TCR8HANDLE h, char cseq );
 static void AckedPacket( TCR8HANDLE h, int nSeq );
 static void NakedPacket( TCR8HANDLE h, int nSeq );
-static BOOL IsValidPacket( TCR8HANDLE h, const char *packet );
+static BOOL IsValidPacket( TCR8HANDLE h, char *packet );
 static BOOL IsEmptyQueue(TCR8HANDLE h);
 static int SendInitialPacket(TCR8HANDLE h);
 static int SendTimeSyncPacket(TCR8HANDLE h);
@@ -2159,7 +2159,7 @@ static int ReadCommentPacket( TCR8HANDLE h, char *buf, int size, char *NextFrame
 					memcpy( NextFrame, NewHead, 3 );
 					
 #ifdef linux
-					nHead += _IsConnectWithCom(h) ? tty_read_until( tty, NextFrame+3, size-3, MSG_ETX ) : sock_read_until( fdSocket, NextFrame+3, size-3, MSG_ETX );
+					nHead += _IsConnectWithCom(h) ? tty_gets( tty, NextFrame+3, size-3, 50, MSG_ETX, NULL ) : sock_read_until( fdSocket, NextFrame+3, size-3, MSG_ETX );
 #else
 					nHead += _IsConnectWithCom(h) ? tty_gets( tty, NextFrame+3, size-3, MSG_ETX ) : sock_read_until( fdSocket, NextFrame+3, size-3, MSG_ETX );
 #endif
@@ -2280,7 +2280,7 @@ RetryConnect:
 			{
 				buf[0] = ch;
 #ifdef linux
-				rlen = _IsConnectWithCom(h) ? tty_read_until( h->m_tty, buf+1, sizeof(buf)-2, MSG_ETX ) : sock_read_until( h->m_sockTCP, buf+1, sizeof(buf)-2, MSG_ETX);
+				rlen = _IsConnectWithCom(h) ? tty_gets( h->m_tty, buf+1, sizeof(buf)-2, 50, MSG_ETX , NULL) : sock_read_until( h->m_sockTCP, buf+1, sizeof(buf)-2, MSG_ETX);
 #else
 				rlen = _IsConnectWithCom(h) ? tty_gets( h->m_tty, buf+1, sizeof(buf)-2, MSG_ETX ) : sock_read_until( h->m_sockTCP, buf+1, sizeof(buf)-2, MSG_ETX);
 #endif
@@ -2887,7 +2887,7 @@ static void NakedPacket( TCR8HANDLE h, int nSeq )
 	Mutex_Unlock(h);
 }
 
-static BOOL IsValidPacket( TCR8HANDLE h, const char *packet )
+static BOOL IsValidPacket( TCR8HANDLE h, char *packet )
 {
 	static struct msg_codelen {
 		int	code;
@@ -2923,10 +2923,13 @@ static BOOL IsValidPacket( TCR8HANDLE h, const char *packet )
 	int	i, len = strlen( packet );
 	const char *end = strchr( packet, MSG_ETX );
 	if( end )
-	 	len  = end - packet + 1;
+	{
+		len  = end - packet + 1;
+		packet[len] = '\0'; // 补充0字节结尾，显示帧内容不会有多余的信息
+	}
 	char cmd;
 	char packet_index;
-	printf("CM: type:%c {%s}, len:%d \r\n", packet[2], packet, len );
+//	printf("CM: type:%c {%s}, len:%d \r\n", packet[2], packet, len );
 
 	if( !_IsValidHandle(h) )
 		return FALSE;
