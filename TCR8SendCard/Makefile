@@ -3,7 +3,7 @@ include ../Makefile.param
 LFLAGS=-lpthread -lm -lrt
 CFLAGS:=-g -I. -DENABLE_TESTCODE -I. -I../utils
 
-AIM=libTCR8ACM.so
+AIM=libTCR8ACC$(TAIL).so
 SRC=$(wildcard ./*.c)
 SRC+=../utils/utils_net.c ../utils/utils_tty.c ../TCR8lib/TCR8lib.c
 OBJ=$(SRC:%.c=%.o) 
