@@ -2580,6 +2580,20 @@ static BOOL IsWaitAck( TCR8HANDLE h, char cmd )
 	return TRUE;
 }
 
+static const char *get_packet_data( const char *pac )
+{
+	static char buffer[256] = {0};
+	char *p = buffer;
+	int len = strlen( pac );
+	int i = 0;
+	len = len > 256 ? 256 : len;
+	while( len-- && *pac != '>' )
+		*p++ = *pac++;
+	*p++ = '>';
+	*p = '\0';
+	return buffer;
+}
+
 int SendPacket( TCR8HANDLE h, const char *i_packet )
 {
 	int	nseq;
@@ -2643,10 +2657,14 @@ int SendPacket( TCR8HANDLE h, const char *i_packet )
 
 			h->_laneMsg[ nseq ].msg_naked = 0;
 			if( _IsConnectWithCom(h) )
+			{
+				printf("tty send \r\n");
 				tty_write( h->m_tty, packet, len );
-			else
+			}
+			else{
+				printf("net send \r\n");
 				sock_write( h->m_sockTCP, packet, len );
-			
+			}
 			h->_laneMsg[ nseq ].t_resend  = GetSystemTime64() + MST_TIMEOUT;
 			TriggerOnProtocolPacket( h, TRUE, packet );
 			TRACE_LOG(h,"[协议帧Tx] %s\n", packet );
@@ -2655,11 +2673,11 @@ int SendPacket( TCR8HANDLE h, const char *i_packet )
 		{
 			if( 1/*IsChinese()*/ )
 			{
-				TRACE_LOG(h,"[TX队列] - 发送队列有等待发送/应答帧，帧%s·放在位置%d 等待发送!\n", packet, nseq );
+				TRACE_LOG(h,"[TX队列] - 发送队列有等待发送/应答帧，帧 [%s]放在位置%d 等待发送!\n", packet, nseq );
 			}
 			else
 			{
-				TRACE_LOG(h,"[TX Queue] - There are wait sent /reply frame, frame %s·is put at %d to send!\n", packet, nseq );
+				TRACE_LOG(h,"[TX Queue] - There are wait sent /reply frame, frame [%s] is put at %d to send!\n", packet, nseq );
 			}
 			h->_laneMsg[ nseq ].msg_state = MST_WAITSEND;
 		}

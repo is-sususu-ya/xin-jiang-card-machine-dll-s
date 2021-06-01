@@ -6,16 +6,16 @@ SET=pc
 SET=hisi
 
 ifeq ($(SET), xinjiang)
-TAIL=arm
+TAIL=_arm
 CC=/work/toolchain_R2_EABI/usr/bin/arm-none-linux-gnueabi-gcc
 else ifeq ($(SET), hisi)
 TAIL=
 CC=arm-hisiv100nptl-linux-gcc
 else ifeq ($(SET), pc)
-TAIL=x86
+TAIL=_x86
 CC=gcc
 else 
-TAIL=x86
+TAIL=_x86
 CC=gcc
 endif
 
