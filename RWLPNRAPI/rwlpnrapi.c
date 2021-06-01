@@ -844,12 +844,14 @@ DLLAPI BOOL CALLTYPE Proxy_Init(HANDLE h, const char *HostIP)
 		TRACE_LOG(pHvObj,"--> Failed to listen TCP port %d (error=%d)!!!\n", PORT_LISTEN, WSAGetLastError());
 		goto proxy_error;
 	}
+#if defined _WIN32 || defined _WIN64
 	pHvObj->proxy_udp = sock_udp_bindLocalIP(HostIP ? inet_addr(HostIP) : INADDR_ANY, PORT_SEARCH);
 	if ( pHvObj->proxy_udp==INVALID_SOCKET)
 	{
 		TRACE_LOG(pHvObj,"--> Failed to bind UDP port %d (error=%d)!!!\n", PORT_SEARCH, WSAGetLastError());
 		goto proxy_error;
 	}
+#endif
 	// sock_udp_broadcast(pHvObj->proxy_udp, TRUE);
 	// create mutex and working thread
 	pHvObj->bProxyEnable = TRUE;

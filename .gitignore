@@ -1,4 +1,7 @@
 linux_release
+demo
+cdemo
+sdemo
 *.so
 *swp
 *.tags
