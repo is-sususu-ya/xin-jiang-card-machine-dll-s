@@ -856,19 +856,14 @@ DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, const char *fmt, ... )
 #else
 DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 #endif
-{
-#ifdef linux 
-	va_list	va;
-	char	str[ 1024 ] = "";
-	va_start(va, fmt);
-	vsprintf(str, fmt, va);
-	va_end(va);
-	printf( str );
-#else
+{ 
 	va_list	va;
 	char	str[ MAX_PATH ] = "";
 	int		rc = 0;  
 	struct	_stat	stat; 
+	static char timestr[30];
+	char *p = timestr;
+	struct timeval tv;
 	if( !_IsValidHandle(h) )
 		return FALSE; 
 	if ( !h->m_strPath ) return FALSE; 
@@ -892,6 +887,18 @@ DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 	} 
 	if ( h->fp != NULL )
 	{ 
+#ifdef linux 
+		gettimeofday( &tv, NULL );
+		strftime( p, sizeof(timestr), "%F %H:%M:%S", localtime( &tv.tv_sec ) );
+		if ( fmt[0] != '\t' )
+		{
+			rc = fprintf(h->fp, "[%s] %s", timestr, str );
+		}
+		else
+		{
+			rc = fprintf(h->fp, "%26s%s", " ", str+1 );
+		} 
+#else
 		SYSTEMTIME	tnow; 
 		GetLocalTime( &tnow );
 		if ( fmt[0] != '\t' )
@@ -903,6 +910,7 @@ DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 		{
 			rc = fprintf(h->fp, "%26s%s", " ", str+1 );
 		} 
+#endif
 		if ( rc < 0 )
 		{
 			fclose( h->fp );
@@ -911,8 +919,7 @@ DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 		else
 			fflush( h->fp );
 	} 
-	Mutex_LogUnlock( h );
-#endif
+	Mutex_LogUnlock( h ); 
 	return TRUE;		
 }
 
