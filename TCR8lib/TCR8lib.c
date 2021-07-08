@@ -860,7 +860,11 @@ DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 	va_list	va;
 	char	str[ MAX_PATH ] = "";
 	int		rc = 0;  
+#ifdef linux
+	struct	stat	stat;
+#else
 	struct	_stat	stat; 
+#endif
 	static char timestr[30];
 	char *p = timestr;
 	struct timeval tv;
