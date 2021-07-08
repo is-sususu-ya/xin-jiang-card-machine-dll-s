@@ -38,6 +38,9 @@
 #pragma comment(lib,"Gdi32.lib");
 #endif
 
+// 使能数据重发三次抛弃功能
+// #define ENABLE_DROP_DATA_OVER_THREE_TIMES
+
 #ifdef linux
 #define Mutex_LogLock(h)	pthread_mutex_lock(  &h->m_hLogMutex  )
 #define Mutex_LogUnlock(h)	pthread_mutex_unlock(  &h->m_hLogMutex  )
@@ -935,7 +938,11 @@ DLLAPI BOOL CALLTYPE  TCR8_Log( TCR8HANDLE h, LPCTSTR fmt,... )
 	va_end(va);
 	if ( h->fp != NULL )
 	{
-		_fstat( _fileno(h->fp), &stat );
+#ifdef linux
+		fstat(fileno(h->fp), &stat );
+#else
+		_fstat(_fileno(h->fp), &stat);
+#endif
 		if ( stat.st_size > MAX_LOGSIZE )
 		{
 			fclose( h->fp );
@@ -2718,20 +2725,17 @@ int SendPacket( TCR8HANDLE h, const char *i_packet )
 			FillXor_HNKS( (unsigned char *)packet, len );
 			len = strlen( packet );
 			/*TRACE_LOG( h, "[Note] 填充协议之后，协议长度： %d，协议内容： %s\n", len, packet );*/
-		}
-
+		} 
 		if ( IsEmptyQueue(h) || !bWaitAck )
 		{
-			h->_laneMsg[ nseq ].msg_state = bWaitAck ? MST_WAITACK : MST_IDLE;
-
+			h->_laneMsg[nseq].msg_sndcnt = 0;
+			h->_laneMsg[ nseq ].msg_state = bWaitAck ? MST_WAITACK : MST_IDLE; 
 			h->_laneMsg[ nseq ].msg_naked = 0;
 			if( _IsConnectWithCom(h) )
-			{
-				printf("tty send \r\n");
+			{ 
 				tty_write( h->m_tty, packet, len );
 			}
-			else{
-				printf("net send \r\n");
+			else{ 
 				sock_write( h->m_sockTCP, packet, len );
 			}
 			h->_laneMsg[ nseq ].t_resend  = GetSystemTime64() + MST_TIMEOUT;
@@ -2747,7 +2751,8 @@ int SendPacket( TCR8HANDLE h, const char *i_packet )
 			else
 			{
 				TRACE_LOG(h,"[TX Queue] - There are wait sent /reply frame, frame [%s] is put at %d to send!\n", packet, nseq );
-			}
+			} 
+			h->_laneMsg[nseq].msg_sndcnt = 0;
 			h->_laneMsg[ nseq ].msg_state = MST_WAITSEND;
 		}
 		h->_laneMsg[ nseq ].t_queue = time(NULL);
@@ -3198,8 +3203,25 @@ static int GetTime2Resend(TCR8HANDLE h)
 	{
 		if ( h->_laneMsg[i].msg_state == MST_WAITACK )
 		{
+#ifdef ENABLE_DROP_DATA_OVER_THREE_TIMES
+			if (h->_laneMsg[i].msg_sndcnt > 3)
+			{
+				h->_laneMsg[i].msg_sndcnt = 0;
+				h->_laneMsg[i].msg_state == MST_IDLE;   
+				if (1)
+				{
+					TRACE_LOG(h, "[协议帧Tx] %s 发送次数超过3次，没收到响应，抛弃该帧！\n", h->_laneMsg[i].msg_body);
+				}
+				else
+				{
+					TRACE_LOG(h, "[Protocol Tx] %s\n", h->_laneMsg[i].msg_body);
+				}
+				continue;
+			}
+#endif
 			if ( tmsNow >= h->_laneMsg[i].t_resend )
 			{
+				h->_laneMsg[i].msg_sndcnt++;
 				if( _IsConnectWithCom(h) )
 					tty_write( h->m_tty, h->_laneMsg[ i ].msg_body, h->_laneMsg[ i ].msg_len );
 				else

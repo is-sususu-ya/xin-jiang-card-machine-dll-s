@@ -36,6 +36,7 @@ typedef enum {
 #define MSGBUF_SIZE		128
 typedef struct lane_msg {
 	int		msg_state;					/* 0 -- free slot, 1 -- wait for ack from lane computer */
+	int		msg_sndcnt;					// how many time has been send
 	int		msg_len;
 	char		msg_body[ MSGBUF_SIZE ];	/* last message body -- null terminated (for resending) */
 	__int64	t_resend;					/* next time to resend if host is not responsed */
