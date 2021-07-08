@@ -816,10 +816,68 @@ DLLAPI BOOL CALLTYPE  TCR8_EnableKernelLog( TCR8HANDLE h, BOOL bEnable )
 	return bRC;
 }
 
+static int get_dirname(const char *path, char* buffer, int buf_size)
+{
+	int             len = -1;
+	const char      *ptr;
+
+	for (ptr = path + strlen(path); ptr >= path; ptr--) {
+		if (*ptr == '/') {
+			len = ptr - path;
+			if (len >= buf_size) return -1;
+			memcpy(buffer, path, len);
+			buffer[len] = '\0';
+			break;
+		}
+	} 
+	return len;
+}
+ 
+static int make_full_dir(const char * path)
+{
+	struct stat     finfo;
+	char        updir[MAX_PATH]; 
+
+	if (get_dirname(path, updir, MAX_PATH) <= 0) {
+		return -1;
+	} 
+	if ((0 == stat(updir, &finfo)) ||
+		(0 == make_full_dir(updir))) {
+		return mkdir(path, 0755);
+	}
+	else {
+		return -1;
+	}
+}
+
 DLLAPI BOOL CALLTYPE  TCR8_EnableLog( TCR8HANDLE h, LPCTSTR strPath )
 {
 #ifdef linux
-
+	char logDir[MAX_PATH];
+	int len;
+	if (!_IsValidHandle(h))
+		return FALSE;
+	if (h->m_strPath)
+	{
+		free(h->m_strPath);
+		fclose(h->fp);
+		h->fp = NULL;
+	}
+	if (strPath)
+	{
+		h->m_strPath = strdup(strPath);
+		len = strlen(strPath);
+		for (; (len <= MAX_PATH) && (len >= 0); len--)
+		{
+			if ((strPath[len] == '/') || (strPath[len] == '\\'))
+				break;
+		}
+		memcpy(logDir, strPath, len);
+		logDir[len] = '\0';
+		make_full_dir(logDir);
+	}
+	else
+		h->m_strPath = NULL;
 #else
 	char logDir[MAX_PATH];
 	int len; 
