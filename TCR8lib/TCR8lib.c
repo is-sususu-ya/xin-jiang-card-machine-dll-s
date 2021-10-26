@@ -2234,8 +2234,7 @@ static int ReadCommentPacket( TCR8HANDLE h, char *buf, int size, char *NextFrame
 				{
 					// This is begining of a valid protocol packet. Terminate comment and try to obtain next packet
 					ptr -= 3;		// backward 3 bytes which are header of next protocol message
-					memcpy( NextFrame, NewHead, 3 );
-					
+					memcpy( NextFrame, NewHead, 3 ); 
 #ifdef linux
 					nHead += _IsConnectWithCom(h) ? tty_gets( tty, NextFrame+3, size-3, 50, MSG_ETX, NULL ) : sock_read_until( fdSocket, NextFrame+3, size-3, MSG_ETX );
 #else
@@ -2374,8 +2373,7 @@ RetryConnect:
 				skipBuf[nSkip++] = ch; 
 				if( nSkip >= (sizeof(skipBuf) - 1) )
 				{
-					skipBuf[sizeof(skipBuf) - 1] = '\0';
-
+					skipBuf[sizeof(skipBuf) - 1] = '\0'; 
 					if( 1/*IsChinese()*/ )
 					{
 						TRACE_LOG(h, "[协议内容错误] 被抛弃 %d 个字节: %s \n", nSkip, skipBuf );
