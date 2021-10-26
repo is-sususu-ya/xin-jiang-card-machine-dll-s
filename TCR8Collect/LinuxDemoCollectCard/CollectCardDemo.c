@@ -66,8 +66,7 @@ static void onACCEvet(int code, int param )
 
         break;
         // 根据业务需要，依据事件号做不同的处理
-        default：
-
+        default:
         break;
     }
 }
