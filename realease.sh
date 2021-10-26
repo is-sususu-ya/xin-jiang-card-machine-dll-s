@@ -1,6 +1,6 @@
 #!/bin/bash
 host=`hostname`
-if [ $host="5fe704e130da" ]; then
+if [ "$host" = "5fe704e130da" ]; then
 	root_dir=`pwd`
 	release_dir=$root_dir/"linux_release"
 	rm -rf $release_dir
