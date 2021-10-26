@@ -1,0 +1,9 @@
+
+EXPORTS
+	DEV_EnableEventMessage		@1
+	DEV_Open					@2
+	DEV_Close					@3
+	DEV_ALB_Ctrl				@4
+	DEV_SetEventHandle			@5
+	DEV_EnableEventMessageEx	@6
+	DEV_GetStatus				@7
