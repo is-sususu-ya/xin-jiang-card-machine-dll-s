@@ -235,7 +235,7 @@ DLLAPI BOOL CALLTYPE  TCR8_OpenDevice(TCR8HANDLE h)
 		return FALSE;
 	} 
 	if( h->m_nBaudrate != 9600 && h->m_nBaudrate != 19200 )
-		h->m_nBaudrate = 19200; 
+		h->m_nBaudrate = 9600; 
 	tty_raw( h->m_tty, NULL, h->m_nBaudrate );
  	pthread_create( &h->m_hThread, NULL, ProtocolThread, h );
 	pthread_mutex_init( &h->m_hMutex, NULL);
@@ -250,7 +250,7 @@ DLLAPI BOOL CALLTYPE  TCR8_OpenDevice(TCR8HANDLE h)
 	}
 
 	if( h->m_nBaudrate != 9600 && h->m_nBaudrate != 19200 )
-		h->m_nBaudrate = 19200; 
+		h->m_nBaudrate = 9600; 
 	tty_raw( h->m_tty, h->m_nBaudrate, 8, 0 );
 	// create work thread
 	h->m_hThread = CreateThread(
