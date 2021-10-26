@@ -33,7 +33,7 @@ else
 		cd $list
 		rm lib*.so 
 		make cc
-		make SET=pc
+		make SET=hisi
 		cp ./lib*.so $release_dir
 		cp ./*.h $release_dir
 		cp *.pdf $release_dir
