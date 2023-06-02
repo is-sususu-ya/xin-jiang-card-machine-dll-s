@@ -188,6 +188,66 @@ int sock_wait_for_io_or_timeout(SOCKET fd, int for_read, long timeout)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TCP
 
+SOCKET sock_connect_tou(DWORD dwIP, int port)
+{  
+	struct sockaddr_in	destaddr;
+	SOCKET 			fd;
+	int TimeOut;
+	int ret;
+	struct timeval timeout;
+	fd_set r;
+	unsigned long ul = 1;
+	memset(&destaddr, 0, sizeof(destaddr));
+	destaddr.sin_family = AF_INET;
+	destaddr.sin_port = htons((short)port);
+	destaddr.sin_addr.s_addr = dwIP;		// 不要用 htonl(dwIP), 因为参数已经是network byte order
+
+	if ((fd = socket(PF_INET, SOCK_STREAM, 0)) != INVALID_SOCKET)
+	{
+		TimeOut = 3000;
+		if ( setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (char *)&TimeOut, sizeof(TimeOut)) == SOCKET_ERROR) {
+			closesocket(fd);
+			fd = INVALID_SOCKET;
+			return fd;
+		}
+		TimeOut = 3000;//设置接收超时6秒
+		if ( setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&TimeOut, sizeof(TimeOut)) == SOCKET_ERROR) {
+			closesocket(fd);
+			fd = INVALID_SOCKET;
+			return fd;
+		} 
+		ret = ioctlsocket(fd, FIONBIO, (unsigned long*)&ul);
+		if (ret == SOCKET_ERROR)
+		{
+			closesocket(fd);
+			fd = INVALID_SOCKET;
+			return fd;
+		}
+		connect(fd, (struct sockaddr *)&destaddr, sizeof(destaddr)); 
+		FD_ZERO(&r);
+		FD_SET(fd, &r);
+		timeout.tv_sec = TimeOut/1000; //连接超时15秒
+		timeout.tv_usec = 0;
+		ret = select(fd+1, 0, &r, 0, &timeout);
+		if (ret <= 0)
+		{
+			closesocket(fd);
+			fd = INVALID_SOCKET;
+			return fd;
+		}
+		int tmp = 1;
+		setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&tmp, sizeof(tmp));
+		ul = 0;
+		ret = ioctlsocket(fd, FIONBIO, (unsigned long*)&ul);
+		if (ret == SOCKET_ERROR) {closesocket(fd);
+			closesocket(fd);
+			fd = INVALID_SOCKET;
+			return fd; 
+		} 
+	}
+	return fd; 
+}
+
 SOCKET sock_connect0( DWORD dwIP, int port )
 {
 	struct sockaddr_in	destaddr;
@@ -199,7 +259,7 @@ SOCKET sock_connect0( DWORD dwIP, int port )
 	destaddr.sin_addr.s_addr = dwIP;		// 不要用 htonl(dwIP), 因为参数已经是network byte order
 
 	if ( (fd = socket(PF_INET, SOCK_STREAM, 0)) != INVALID_SOCKET )
-	{
+	{ 
 		if ( connect(fd, (struct sockaddr *)&destaddr, sizeof(destaddr)) == SOCKET_ERROR )
 		{
 			sock_close( fd );
@@ -445,7 +505,16 @@ int sock_read_n_bytes_tout(SOCKET fd, void* buffer, int n, long tout)
 	}
 	return (ptr-(char*)buffer);
 }
+ 
+unsigned long sock_iqueue(SOCKET sock)
+{
+	unsigned long ul;
 
+	if (ioctlsocket(sock, FIONREAD, &ul) == 0)
+		return ul;
+	return 0;
+}
+ 
 int sock_write_n_bytes(SOCKET fd, const void* buffer, int size)
 {
 	int len;

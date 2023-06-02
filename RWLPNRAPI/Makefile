@@ -1,5 +1,5 @@
 SRC:=$(wildcard *.c)
-SRC+=../utils/utils_net.c ../utils/longtime.c
+SRC+=../utils/utils_net.c ../utils/longtime.c ../utils/utils_mtrace.c
 OBJ=$(SRC:%.c=%.o)
 LIBS_FLAGS:=-lpthread -lrt -lm
 APP_FLAGS:= -g -Wall -fPIC -I../utils/
@@ -11,7 +11,8 @@ LIBS_FLAGS+=-shared
 
 all: $(TARGET)
 $(TARGET) : $(OBJ)
-	$(CC) $(LIBS_FLAGS) -o $@ $^
+	$(CC) -shared -o $@ $^ $(LIBS_FLAGS)
+
 
 $(OBJ) :%.o:%.c
 	$(CC) $(APP_FLAGS) -c $^ -o $@

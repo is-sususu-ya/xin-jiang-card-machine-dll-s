@@ -15,7 +15,6 @@ typedef int BOOL;
 typedef int	DWORD;
 typedef const char*  LPCTSTR;
 typedef void * HANDLE;
-
  
 typedef void   (*ACCEventHandle)(int a, int b); 
 typedef  BOOL  (*_ACC_SetEventCallBack)(ACCEventHandle cb);
@@ -40,10 +39,17 @@ typedef int	  (*_ACC_GetRxData)(char *buf, int size);
 typedef int   (*_ACC_GetKernelLog)(char *buf, int size);
 
 
+_ACC_GetChannelState ACC_GetChannelState = NULL;
+
 #define LoadFuction( name ) \
     _##name name = NULL;\
     name = (_##name)dlsym(lib, #name );\
     if (!name) { fprintf(stderr, "resolve error ¡¾%s¡¿%s\n", #name, dlerror()); exit(0); }else{fprintf(stdout,"resolve ¡¾%s¡¿ success \r\n", #name );}
+
+#define LoadGlobalFuction( name ) \
+    name = (_##name)dlsym(lib, #name );\
+    if (!name) { fprintf(stderr, "resolve error ¡¾%s¡¿%s\n", #name, dlerror()); exit(0); }else{fprintf(stdout,"resolve ¡¾%s¡¿ success \r\n", #name );}
+
  
 static void onACCEvet(int code, int param )
 {
@@ -91,7 +97,7 @@ int main(int argc, char const *argv[])
     LoadFuction(ACC_GetBoxSN);
     LoadFuction(ACC_SetCardCounter);
     LoadFuction(ACC_GetCardCounter); 
-    LoadFuction(ACC_GetChannelState);
+    LoadGlobalFuction(ACC_GetChannelState);
     LoadFuction(ACC_IsBoxLoad);     
     LoadFuction(ACC_GetTxData);
     LoadFuction(ACC_GetRxData);

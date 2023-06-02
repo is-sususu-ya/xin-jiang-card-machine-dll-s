@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #ifndef __MTRACE_INCLUDED__
 #define __MTRACE_INCLUDED__
 

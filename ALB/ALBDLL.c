@@ -13,8 +13,8 @@
 HWND	m_hWnd = NULL;
 UINT		m_nMsg = 0;
 #define TTY_GETS(fd, bs, sz, eoc)		tty_gets(fd, bs, sz, eoc)
-#else
-#include "../common/mtrace.h"
+#else 
+#include "utils_mtrace.h" 
 #include <error.h>
 #include <errno.h>
 #include <unistd.h>
@@ -148,19 +148,16 @@ static void ProcessHeartBeatOverTime( ALBHANDLE hALB )
 	switch( hALB->m_nInterface )
 	{
 	case INTERFACE_NET:
-		if( hALB->m_nSocket == INVALID_SOCKET )
+ 
+		if (hALB->m_nSocket == INVALID_SOCKET)   
 			return;
 		sock_close( hALB->m_nSocket );
 		hALB->m_nSocket = INVALID_SOCKET;
 		hALB->m_nALBStateThis.m_bOnline = FALSE;
-		if( hALB->m_nCb != NULL )
-		{
-			//MTRACE_LOG(hALB->hLog, "[Note] Call device event callback function!\n" );
-			MTRACE_LOG(hALB->hLog, "[Note] 上报离线事件\n");
-
-			hALB->m_nCb( hALB, EVID_OFFLINE, 1 );
-
-			//MTRACE_LOG(hALB->hLog, "[Note] Back from device event callback function!\n" );
+		if( hALB->m_nCb != NULL ) 
+		{ 
+			MTRACE_LOG(hALB->hLog, "[Note] 上报离线事件\n"); 
+			hALB->m_nCb( hALB, EVID_OFFLINE, 1 );  
 		}
 		hALB->m_nALBStateLast.m_bOnline = FALSE;
 		break;
@@ -268,8 +265,8 @@ ALBHANDLE libALBOpen( const char *device, ALBCallBack pFunc, const char *logName
 		}
 		hALB->m_nInterface = INTERFACE_NET;
 		hALB->m_nIP = nIP;
-
-		hALB->m_nSocket = sock_connect0( hALB->m_nIP, ALB_CONTROLLER_TCP_PORT );
+ 
+		hALB->m_nSocket = sock_connect_tou( hALB->m_nIP, ALB_CONTROLLER_TCP_PORT ); 
 
 		if( hALB->m_nSocket == INVALID_SOCKET )
 		{
@@ -661,18 +658,8 @@ static DWORD WINAPI WorkThreadProc(LPVOID lpParameter)
 			{
 				Sleep( 5000 );
 				continue;
-			}
-			MTRACE_LOG(hALB->hLog, "[Note] TCP connection to ALB controller established!\n", i );
-
-			//hALB->m_nALBStateThis.m_bOnline = TRUE;
-			//if( hALB->m_nCb != NULL )
-			//{
-			//	//MTRACE_LOG(hALB->hLog, "[Note] Call device event callback function!\n" );
-			//	MTRACE_LOG(hALB->hLog, "[Note] 上报连线事件\n");
-			//	hALB->m_nCb( hALB, EVID_ONLINE, 1 );
-			//	//MTRACE_LOG(hALB->hLog, "[Note] Back from device event callback function!\n" );
-			//}
-			//hALB->m_nALBStateLast.m_bOnline = TRUE;
+			} 
+			MTRACE_LOG(hALB->hLog, "[Note] TCP connection to ALB controller established!\n", i );  
 			hALB->m_tHeartBeatTime = time( NULL ) + HEARTBEAT_PERIOD;
 			SendHeartBeat( hALB );
 			hALB->m_tHeartBeatOverTime = time( NULL ) + HEATBEAT_OVERTIME; //  update next heart-beat time
@@ -705,9 +692,8 @@ static DWORD WINAPI WorkThreadProc(LPVOID lpParameter)
 
 			// read tcp data and process it
 			if( nsel > 0 && FD_ISSET( hALB->m_nSocket, &rfd_set ) )
-			{
-				err = sock_read_line( hALB->m_nSocket, buf, sizeof(buf) );
-
+			{ 
+				err = sock_read_n_bytes_tout( hALB->m_nSocket, buf, sizeof(buf), 50  ); 
 				if( err > 0 )
 				{
 					ProcessALBMsg( hALB, buf );
@@ -746,11 +732,14 @@ static DWORD WINAPI WorkThreadProc(LPVOID lpParameter)
 		{
 			hALB->m_tHeartBeatTime = nTime + HEARTBEAT_PERIOD;
 			SendHeartBeat( hALB );
-		}
-		
+		}   
 		Sleep( 100 );
-	}
-
+	} 
+	if (hALB->m_nInterface == INTERFACE_NET && hALB->m_nSocket > 0)
+	{
+		sock_close(hALB->m_nSocket);
+		hALB->m_nSocket = INVALID_SOCKET;
+	} 
 	if( hALB->m_nQuit == 1 )
 	{
 		hALB->m_nQuit = 2;
@@ -873,7 +862,7 @@ _API_EXPORT BOOL CALLTYPE DEV_EnableEventMessageEx( HANDLE h, HWND hWnd, UINT Ms
 
 	return TRUE;
 }
-#endif
+#endif 
 //#else		// linux
 _API_EXPORT BOOL CALLTYPE DEV_SetEventHandle( HANDLE h, DEVEventCallBack pCallBack )
 {
@@ -934,4 +923,48 @@ _API_EXPORT BOOL CALLTYPE DEV_GetStatus( HANDLE h, DWORD *dwStatus )
 	return TRUE;
 }
 
-////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////// 
+
+#ifdef _DEBUG
+ 
+static void onAlbEvent(HANDLE h,int nEventId, int *param )
+{
+	printf("device event:%d \r\n", nEventId ); 
+}
+
+int main(int argc, char *argv[])
+{
+	char input[32];
+	HANDLE alb = NULL;
+	time_t tick;
+	while (1)
+	{
+		fgets(input, sizeof(input), stdin);
+		switch (input[0])
+		{
+		case 'a':
+			tick = time(NULL);
+			printf("开始连接控制！\r\n");
+			if ( alb != NULL )
+			{
+				DEV_Close(alb);
+			}
+			alb = DEV_Open("192.168.1.190"); 
+			printf("结束连接，时长：%d \r\n", time(NULL)- tick);
+			if (alb)
+			{
+				DEV_SetEventHandle(alb, onAlbEvent);
+			}
+			break;
+		case 'b':
+			DEV_ALB_Ctrl(alb, 1);
+			break;
+		case 'c':
+			DEV_ALB_Ctrl(alb, 0);
+			break;
+		default:
+			break;
+		}
+	}
+} 
+#endif 

@@ -1,4 +1,5 @@
 *.log
+*.7z
 linux_release
 demo
 cdemo

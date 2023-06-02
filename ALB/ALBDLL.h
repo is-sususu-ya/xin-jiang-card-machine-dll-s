@@ -4,13 +4,13 @@
 #ifdef linux
 #define _API_EXPORT
 #define CALLTYPE
-#else		// _WIN32 or _WIN64
-#define _API_EXPORT //__declspec(dllexport)
+#else		// _WIN32 or _WIN64 
+#define _API_EXPORT __declspec(dllexport) 
 #define CALLTYPE __stdcall
 #endif
 
-#ifdef linux
-#include "..\common\wintype.h"
+#ifdef linux   
+#include "wintype.h" 
 #else
 #include <windows.h>
 #endif
@@ -25,10 +25,10 @@ typedef void (* DEVEventCallBack)( void *h, int nEventId, int nParam );
 #if defined _WIN32 || defined _WIN64
 _API_EXPORT void   CALLTYPE DEV_EnableEventMessage( HWND hWnd, UINT MsgID );	/* obsoleted API, use DEV_EnableEventMessageEx instead */
 _API_EXPORT BOOL CALLTYPE DEV_EnableEventMessageEx( HANDLE h, HWND hWnd, UINT MsgID );
-#else
-// linux user need callback mechanism to handle event
-_API_EXPORT BOOL   CALLTYPE DEV_SetEventHandle( HANDLE h, DEVEventCallBack pCallBack );
+#else 
 #endif
+// linux user need callback mechanism to handle event
+_API_EXPORT BOOL   CALLTYPE DEV_SetEventHandle(HANDLE h, DEVEventCallBack pCallBack); 
 
 /* 1. 使用网线和栏杆机控制器通信时 strIP 为栏杆机控制器的IP地址，格式为"192.168.1.35"
 *  2. 使用串口和栏杆机控制器通信时 strIP 为连接栏杆机控制器的串口号，格式为"COM3"

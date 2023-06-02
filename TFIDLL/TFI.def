@@ -1,0 +1,25 @@
+
+EXPORTS        
+	TFI_Create @1
+	TFI_Destroy @2
+	TFI_OpenNet @3
+	TFI_Close @4
+	TFI_ClearAll @5
+	TFI_GetDeviceInfo @6
+	TFI_SendLine @7
+	TFI_GetQrCode @8
+	TFI_SetMode @9
+	TFI_AlarmSet @10
+	TFI_SendVoice @11
+	TFI_OpenCom @12
+	TFI_EnableLog @13
+	TFI_SetLogPath @14
+	TFI_SetCallBack @15
+	TFI_PlayDu	@16
+	TFI_SetWinMsg @17
+	TFI_ClearPipMode	@18
+	TFI_DisplayPipMode @19
+	TFI_SetPassLight	@20
+	TFI_SetPicture @21
+
+	

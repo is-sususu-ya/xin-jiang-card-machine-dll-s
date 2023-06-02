@@ -880,7 +880,7 @@ void CTCR8SimulatorDlg::OnButtonMP( UINT uID )
 
 
 void CTCR8SimulatorDlg::OnButtonTakeCard() 
-{
+{ 
 	// TODO: Add your control notification handler code here
 	if ( IsOnExit(m_nCH2OP) )
 	{

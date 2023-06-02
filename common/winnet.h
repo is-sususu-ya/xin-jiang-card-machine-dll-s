@@ -51,6 +51,10 @@ extern int sock_set_timeout(SOCKET fd, int which, int tout);
 extern int sock_wait_for_io_or_timeout(SOCKET fd, int for_read, long msec);
 #define sock_dataready(fd,tout)	(sock_wait_for_io_or_timeout(fd,1,tout)==0)
 
+
+SOCKET sock_connect_tou(DWORD dwIP, int port);
+unsigned long sock_iqueue(SOCKET sock);
+
 extern SOCKET sock_connect_timeout( const char *host, int port, int tout );
 #define sock_connect(host, port )		sock_connect_timeout(host,port,0)
 extern SOCKET sock_connect0( DWORD dwIP, int port );

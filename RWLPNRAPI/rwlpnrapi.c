@@ -812,14 +812,20 @@ DLLAPI BOOL CALLTYPE LPNR_Terminate(HANDLE h)
 	//DeleteObject(pHvObj->hMutex);
 	if ( pHvObj->sock != INVALID_SOCKET )
  		closesocket( pHvObj->sock);
-
+#ifdef ENABLE_PROXY
 	if ( pHvObj->bProxyEnable )
 		Proxy_Terminate(pHvObj);
+#endif
 
 	free( pHvObj );	
 	return TRUE;
 }
 
+#ifndef linux
+#define ENABLE_PROXY
+#endif
+
+#ifdef ENABLE_PROXY
 DLLAPI BOOL CALLTYPE Proxy_Init(HANDLE h, const char *HostIP)
  {
 	PHVOBJ pHvObj = (PHVOBJ)h;
@@ -952,6 +958,8 @@ DLLAPI int	 CALLTYPE Proxy_GetClients(HANDLE h, char strIP[][16], int ArraySize)
 	}
 	return 0;
 }
+
+#endif
 
 
 // 设置应用程序的事件回调函数
@@ -1293,6 +1301,69 @@ BOOL CALLTYPE LPNR_DownloadImage(HANDLE h, BYTE *image, int size, int format)
 	sock_write( pHvObj->sock, (char *)image, size );
 	return TRUE;
 }
+
+#ifdef linux
+static void _split_whole_name(const char *whole_name, char *fname, char *ext);
+
+static int stricmp(const char *a, const char *b)
+{
+    return strcmp(a,b);
+}
+
+void _splitpath(const char *path, char *drive, char *dir, char *fname, char *ext)
+{
+	char *p_whole_name;
+ 
+	drive[0] = '\0';
+	if (NULL == path)
+	{
+		dir[0] = '\0';
+		fname[0] = '\0';
+		ext[0] = '\0';
+		return;
+	}
+ 
+	if ('/' == path[strlen(path)])
+	{
+		strcpy(dir, path);
+		fname[0] = '\0';
+		ext[0] = '\0';
+		return;
+	}
+ 
+	p_whole_name = rindex(path, '/');
+	if (NULL != p_whole_name)
+	{
+		p_whole_name++;
+		_split_whole_name(p_whole_name, fname, ext);
+ 
+		snprintf(dir, p_whole_name - path, "%s", path);
+	}
+	else
+	{
+		_split_whole_name(path, fname, ext);
+		dir[0] = '\0';
+	}
+}
+ 
+static void _split_whole_name(const char *whole_name, char *fname, char *ext)
+{
+	char *p_ext;
+ 
+	p_ext = rindex(whole_name, '.');
+	if (NULL != p_ext)
+	{
+		strcpy(ext, p_ext);
+		snprintf(fname, p_ext - whole_name + 1, "%s", whole_name);
+	}
+	else
+	{
+		ext[0] = '\0';
+		strcpy(fname, whole_name);
+	}
+}
+
+#endif
 
 BOOL CALLTYPE LPNR_DownloadImageFile(HANDLE h, LPCTSTR strFile)
 {
@@ -2871,6 +2942,7 @@ THREADCALL lpnr_workthread_fxc(PVOID lpParameter)
 	return THREADRET;
  }
  
+#ifdef ENABLE_PROXY
  // 仅Windows模式下支持Proxy功能，因为有些API仅在Windows下实现并且测试过
 #if defined _WIN32 || defined _WIN64
  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3223,7 +3295,10 @@ THREADCALL proxy_masterthread_fxc(void *param)
 }
 #endif
 
+#endif
+
  //=============================================================================
+// #define ENABLE_LPNR_TSETCODE
 #if defined linux && defined ENABLE_LPNR_TESTCODE
 #include <termios.h>
 
