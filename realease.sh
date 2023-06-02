@@ -1,12 +1,12 @@
 #!/bin/bash
 host=`hostname`
-if [ "$host" = "5fe704e130da" ]; then
+if [ "$host" = "571f5f8200ca" ]; then
 	root_dir=`pwd`
 	release_dir=$root_dir/"linux_release"
 	rm -rf $release_dir
 	mkdir $release_dir
 	for list in $root_dir/TCR8Collect/  $root_dir/TCR8SendCard/
-	do 
+	do
 		cd $root_dir
 		cd $list
 		rm lib*.so
@@ -19,7 +19,7 @@ if [ "$host" = "5fe704e130da" ]; then
 		cp *.pdf $release_dir
 		cp LinuxDemo* -rf $release_dir
 		make cc
-	done 
+	done
 	cd $root_dir
 	cp ./utils/wintype.h $release_dir
 else
@@ -28,10 +28,10 @@ else
 	rm -rf $release_dir
 	mkdir $release_dir
 	for list in $root_dir/TCR8Collect/  $root_dir/TCR8SendCard/
-	do 
+	do
 		cd $root_dir
 		cd $list
-		rm lib*.so 
+		rm lib*.so
 		make cc
 		make SET=hisi
 		cp ./lib*.so $release_dir
@@ -39,7 +39,7 @@ else
 		cp *.pdf $release_dir
 		cp LinuxDemo* -rf $release_dir
 		make cc
-	done 
+	done
 	cd $root_dir
 	cp ./utils/wintype.h $release_dir
 fi
