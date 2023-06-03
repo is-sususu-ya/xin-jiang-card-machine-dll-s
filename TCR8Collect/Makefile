@@ -1,7 +1,7 @@
 include ../Makefile.param
 
 LFLAGS=-lpthread -lm -lrt
-CFLAGS:=-g -I. -DENABLE_TESTCODE -I. -I../utils
+CFLAGS:=-g -I. -DENABLE_TESTCODE -I. -I../utils -fPIC
 
 AIM=libTCR8ACC$(TAIL).so
 SRC=$(wildcard ./*.c)

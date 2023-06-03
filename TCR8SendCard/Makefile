@@ -1,11 +1,11 @@
 include ../Makefile.param
 
 LFLAGS=-lpthread -lm -lrt
-CFLAGS:=-g -I. -DENABLE_TESTCODE -I. -I../utils
+CFLAGS:=-g -I. -DENABLE_TESTCODE -I. -I../utils -fPIC
 
 AIM=libTCR8ACM$(TAIL).so
 SRC=$(wildcard ./*.c)
-SRC+=../utils/utils_net.c ../utils/utils_tty.c ../TCR8lib/TCR8lib.c
+SRC+=../utils/utils_net.c ../utils/utils_tty.c ../TCR8lib/TCR8lib.c ../utils/longtime.c
 OBJ=$(SRC:%.c=%.o) 
  
 all : $(AIM)

@@ -59,7 +59,12 @@ int main(int argc, char const *argv[])
     /* 加载并解析所有接口 */
     char buf[32];
     HANDLE hCM = NULL;
-    HANDLE lib = dlopen("libTCR8ACM.so", RTLD_LAZY );
+    HANDLE lib = dlopen("./libTCR8ACM.so", RTLD_LAZY );
+     if( !lib ) 
+    {
+        printf("加载动态库失败：%s！\r\n", dlerror());
+        return 0;
+    }
     LoadFuction(ACM_OpenDevice);
     LoadFuction(ACM_SetEventCallBackFunc);
     LoadFuction(ACM_CloseDevice); 

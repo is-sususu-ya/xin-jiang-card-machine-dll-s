@@ -5,6 +5,8 @@
 
 #define TCR8LOG_DEFAULT_PATH	"./RunwellTCR8Dll.log"
 
+#define Sleep(n)	usleep(n*1000)
+
 #undef MAX_PATH
 #define MAX_PATH 256
 
