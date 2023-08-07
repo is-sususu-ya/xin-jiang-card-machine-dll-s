@@ -1,0 +1,24 @@
+ROOT_PATH?=$(shell cd $(PWD)/..; pwd)
+ARCH=arm
+
+# 编译器版本，PC-> gcc	
+#V100 -> arm-hisiv100nptl-linux-gcc 
+#V200 -> arm-hisiv200-linux-gcc 
+#V400 -> arm-hisiv400-linux-gcc
+  
+CC=arm-hisiv100nptl-linux-gcc
+CURL_DEP=-L$(ROOT_PATH)/lib/v100lib/ -lcurl -lssl -lcrypto
+BOARD_TYPE=TSP86
+ 
+ifeq ($(BOARD_TYPE), TMPE42)
+CC=arm-hisiv400-linux-gcc
+CURL_DEP=-L$(ROOT_PATH)/lib/v400lib/ -lcurl  -lssl -lcrypto
+endif
+  
+#特殊参数
+
+INCLUDE_PATH=-g -Wall -fPIC -I$(ROOT_PATH) -I$(ROOT_PATH)/utils -I$(ROOT_PATH)/include 
+SYS_FLAGS:= -lpthread -lrt -lm  
+CLANE_LFLAGS+=-L$(ROOT_PATH)/utils -lutils
+
+
