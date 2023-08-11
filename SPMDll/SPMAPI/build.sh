@@ -1,5 +1,15 @@
 #!/bin/bash
+
+git pull
+
 make clean
-make 2>err.log
-cat err.log | grep error | head -n 20 
-rm err.log
+make cc
+make CC=/work/toolchain_R2_EABI/usr/bin/arm-none-linux-gnueabi-gcc APP=libSPM_arm.so
+
+make clean
+make cc
+make CC=gcc APP=libSPM_x86.so
+ 
+make clean
+make cc
+make CC=arm-hisiv100nptl-linux-gcc APP=libSPM_hisi.so

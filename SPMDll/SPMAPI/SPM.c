@@ -425,6 +425,9 @@ EXPAPI BOOL CALLTYPE SPM_GetQrCode(HANDLE h, char *buf)
 
 EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h,  char* server, char*  clientId)
 {
+	OBJECT_S *pSPM = (OBJECT_S *)h;
+	if (INVLAID_OBJ(pSPM))
+		return FALSE;
 	uint8_t buffer[256];
 	uint8_t tmp[256] = { 0 };
 	char text[256] = {0};
@@ -439,6 +442,9 @@ EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h,  char* server, char*  clientId)
 
 EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, char *phoneId, int timeout)
 {
+	OBJECT_S *pSPM = (OBJECT_S *)h;
+	if (INVLAID_OBJ(pSPM))
+		return FALSE;
 	uint8_t buffer[256];
 	uint8_t tmp[256] = { 0 }; 
 	char text[256] = {0};
@@ -453,6 +459,9 @@ EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, char *phoneId, int timeout)
 
 EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int timeout)
 {
+	OBJECT_S *pSPM = (OBJECT_S *)h;
+	if (INVLAID_OBJ(pSPM))
+		return FALSE;
 	uint8_t buffer[256];
 	uint8_t tmp[256] = { 0 }; 
 	char text[256] = {0}; 
@@ -466,7 +475,7 @@ EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int tim
 }
 
 static int gpio_output(OBJECT_S *pSPM, int type, int pin, int val)
-{
+{ 
 	uint8_t buffer[128];
 	uint8_t tmp[32] = { 0 };
 	int len;
