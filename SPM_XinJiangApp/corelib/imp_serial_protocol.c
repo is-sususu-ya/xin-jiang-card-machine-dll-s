@@ -227,7 +227,7 @@ void sound_play_text(int vol, const char *text)
     send_kd_data(snd_text);
     trace_log("向语音板发送语音：%s 音量：%d \r\n", text, vol );  
 }
-
+extern SystemConfig g_apconfig;
 /**
  * @brief 处理动态库或者PC发来的消息
  * 
@@ -395,6 +395,41 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         {
             trace_log("未定义功能\r\n");
         }
+        break;
+    case 0x80:
+        {
+            trace_log("初始化语音对讲参数..");
+            char serverid[256] = {0};
+            char clientId[64] = {0};
+            char input[256] = {0};
+            memcpy(input, param + 4, plen - 5);
+            // 解析字符串 XX;XX
+            char *p = strtok(input, ";");
+            if (p)
+            {
+                strcpy(serverid, p);
+                p = strtok(NULL, ";");
+                if (p)
+                {
+                    strcpy(clientId, p);
+                }
+            }
+            if (strlen(serverid) > 0 && strlen(clientId) > 0)
+            {
+                trace_log("serverid=%s, clientId=%s", serverid, clientId);
+                memset(g_apconfig.talk_back_dwn, 0, sizeof(g_apconfig.talk_back_dwn));
+                sprintf(g_apconfig.talk_back_dwn, "http://%s:8080/voice/talkback?clientId=%s", serverid, clientId);
+                trace_log("talk_back_dwn=%s", g_apconfig.talk_back_dwn);
+                save_apconfig();
+            }
+        }
+        break;
+    case 0x81:
+        trace_log("触发语音对讲..");
+		add_http_get_task(0, g_apconfig.talk_back_dwn);
+        break;
+    case 0x82:
+        trace_log("应答语音对讲.");
         break;
     default:
         break;
@@ -767,6 +802,21 @@ void spm_gpio_change(int di_last, int di_this)
     memcpy(buf, &di_this, 4); 
     trace_log("上报io状态：%#x \r\n", di_this );
     len = create_package(0, 0x80, (uint8_t *)buf, 4, buffer, sizeof(buffer));
+    SendLock();
+    if (theApp.peer_fd > 0)
+        sock_write_n_bytes(theApp.peer_fd, buffer, len); 
+    if( theApp.tty_fd > 0 )
+        tty_write(theApp.tty_fd, buffer, len );   
+    SendUnLock(); 
+}
+
+void spm_answer_talk()
+{ 
+    int32_t len; 
+    char buf[32] = {0};
+    char buffer[64] = {0}; 
+    trace_log("上报语音接入.\r\n");
+    len = create_package(0, 0x90, (uint8_t *)buf, 4, buffer, sizeof(buffer));
     SendLock();
     if (theApp.peer_fd > 0)
         sock_write_n_bytes(theApp.peer_fd, buffer, len); 

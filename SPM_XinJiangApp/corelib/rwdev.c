@@ -311,7 +311,7 @@ static void keyboard_event(char *key)
 	char text[30] = {0};
 	strncpy(text, key, sizeof(text));
 	text[27] = '\0';
-	ltrace("键盘扫码信息：%s \r\n", key );
+	ltrace("键盘扫码信息：%s \r\n", key);
 	on_qr_ready(key);
 	EVT_HEADER_INIT(header, EVT_KEYBOARD, text);
 	Client_send(NULL, &header, NULL);
@@ -791,6 +791,9 @@ static void *local_server(void *arg)
 
 #include "gpio.h"
 
+#define PIN_UP_HELP 0x01
+#define PIN_DOWN_HELP 0x02
+
 static int has_init = 0;
 static void io_cb(int di_last, int di_this)
 {
@@ -799,6 +802,16 @@ static void io_cb(int di_last, int di_this)
 	IO_STAT_HEADER_INIT(header, 0, di_last, di_this);
 	Client_send(NULL, &header, NULL);
 	spm_gpio_change(di_last, di_this);
+	if( !(di_last & PIN_UP_HELP) && (di_this & PIN_UP_HELP) )
+	{
+		ltrace("上工位求助，触发对讲.\r\n");
+		add_http_get_task(0, g_apconfig.talk_back_up);
+	}
+	if( !(di_last & PIN_DOWN_HELP) && (di_this & PIN_DOWN_HELP) )
+	{
+		ltrace("下工位求助，触发对讲.\r\n");
+		add_http_get_task(0, g_apconfig.talk_back_dwn);
+	}
 }
 
 static void sync_config()

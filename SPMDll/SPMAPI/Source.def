@@ -1,0 +1,25 @@
+EXPORTS        
+	SPM_Create      @1
+	SPM_Destory      @2
+	SPM_IsOnline      @3
+	SPM_Open      @4
+	SPM_SetCallBack      @5
+	SPM_Led_ClearAll      @6
+	SPM_Led_SendLineText      @7
+	SPM_Voice_SendText      @8
+	SPM_Lcd_ChangeContext      @9
+	SPM_SyncTime      @10
+	SPM_Reboot      @11
+	SPM_EnableQrCode      @12
+	SPM_GetQrCode		@13
+	SPM_Close	@14
+	SPM_SetWinMsg	@15 
+	SPM_GpioOutPut	@16 
+	SPM_GpioPulse	@17 
+	SPM_GpioPulseNegative	@18
+	SPM_ReadDi			@19 
+	SPM_SetHttpProxyAddress  		@20
+	SPM_SetHttpProxyConfig  		@21 
+	SPM_SetHttpPostProxyRequest  		@22
+	SPM_SetHttpGetProxyRequest  		@23 
+	SPM_GetHttpProxyResponse 		@24

@@ -51,7 +51,7 @@ static fxc_http_response http_response_fxc = NULL;
 #define Lock() pthread_mutex_lock(&http_mutex)
 #define UnLock() pthread_mutex_unlock(&http_mutex)
 
-extern void ltrace(const char *fmt,...);
+extern void ltrace(const char *fmt, ...);
 
 static void task_wait(int sec)
 {
@@ -112,16 +112,23 @@ static void load_data()
     }
 }
 
+static const char *GbkString(const char *utf8String)
+{
+    static char buffer[512] = {0};
+    memset(buffer, 0, sizeof(buffer));
+    UTF8ToGBK(utf8String, strlen(utf8String), buffer);
+}
+
 void register_http_url(int id, const char *durl)
 {
-    if (id < 0 || id >= 10 || !durl || strncmp(durl, "http", 4 ) !=  0)
+    if (id < 0 || id >= 10 || !durl || strncmp(durl, "http", 4) != 0)
     {
-        ltrace("参数错误【%d】【%s】\r\n", id, durl );
+        ltrace("参数错误【%d】【%s】\r\n", id, durl);
         return;
     }
     strncpy(url[id], durl, MAX_URL_SIZE);
     ltLastUPdate = GetTickCount() + 500;
-    ltrace("注册url【%d】【%s】\r\n", id, durl );
+    ltrace("注册url【%d】【%s】\r\n", id, durl);
 }
 
 void http_task_init()
@@ -138,7 +145,7 @@ void http_task_exit()
     pthread_join(http_thread, NULL);
 }
 
-void add_http_post_task( int index, int id, int type, char *request)
+void add_http_post_task(int index, int id, int type, char *request)
 {
     HttpRequestContentxS *cont = malloc(sizeof(HttpRequestContentxS));
     memset(cont, 0, sizeof(HttpRequestContentxS));
@@ -153,12 +160,12 @@ void add_http_post_task( int index, int id, int type, char *request)
     task_wakeup();
 }
 
-void add_http_url_post_task( int index, const char *url, int type, char *request)
+void add_http_url_post_task(int index, const char *url, int type, char *request)
 {
     HttpRequestContentxS *cont = malloc(sizeof(HttpRequestContentxS));
     memset(cont, 0, sizeof(HttpRequestContentxS));
     cont->is_get = 0;
-    strcpy( cont->url, url );
+    strcpy(cont->url, url);
     cont->index = index;
     cont->type = type;
     cont->request = strdup(request);
@@ -168,12 +175,12 @@ void add_http_url_post_task( int index, const char *url, int type, char *request
     task_wakeup();
 }
 
-void add_http_get_task( int id, char *url )
+void add_http_get_task(int id, char *url)
 {
     HttpRequestContentxS *cont = malloc(sizeof(HttpRequestContentxS));
     memset(cont, 0, sizeof(HttpRequestContentxS));
     cont->is_get = 1;
-    strcpy( cont->url, url );
+    strcpy(cont->url, url);
     Lock();
     PtrList_append(&http_task_list, cont);
     UnLock();
@@ -189,7 +196,7 @@ static void *http_work_thread(void *arg)
 {
     char response_buf[10924];
     int ret;
-    while ( !bQuit )
+    while (!bQuit)
     {
         if (ltLastUPdate != 0 && GetTickCount() > ltLastUPdate)
         {
@@ -206,43 +213,48 @@ static void *http_work_thread(void *arg)
         HttpRequestContentxS *c = PtrList_remove_head(&http_task_list);
         UnLock();
         memset(response_buf, 0, sizeof(response_buf));
-        if( c->is_get )
+        if (c->is_get)
         {
-            ltrace("发起GET请求: %s \r\n", c->url ); 
-            ret = http_get( c->url, response_buf, sizeof(response_buf) );
-            if (NET_ERROR_NONE == ret)    
-                c->response = strdup( response_buf );
+            ltrace("发起GET请求: %s \r\n", c->url);
+            ret = http_get(c->url, response_buf, sizeof(response_buf));
+            if (NET_ERROR_NONE == ret)
+                c->response = strdup(response_buf);
             else
-                c->response = strdup( ErrorString(ret));
-            ltrace("响应码【%d】响应结果：%s \r\n", ret,   c->response );
-            if( http_response_fxc )
-                http_response_fxc( c->id, abs(ret), c->response, strlen( c->response )); 
-            free( c->response );
-            free( c );   
-        }else{    
+                c->response = strdup(ErrorString(ret)); 
+            ltrace("REPONSE：\r\n%s\r\n", GbkString(response_buf));
+            if (http_response_fxc)
+                http_response_fxc(c->id, abs(ret), c->response, strlen(c->response));
+            free(c->response);
+            free(c);
+        }
+        else
+        {
             ltrace("参数：%s \r\n", c->request);
-            if( c->url[0] == 0 )
+            if (c->url[0] == 0)
             {
                 ltrace("发起POST请求: %s \r\n", url[c->index]);
-                ret = http_post( url[c->index], c->type, c->request, response_buf, sizeof(response_buf) );   
+                ret = http_post(url[c->index], c->type, c->request, response_buf, sizeof(response_buf));
+                ltrace("POST：\r\n%s\r\n", GbkString(c->request));
+                ltrace("REPONSE：\r\n%s\r\n", GbkString(response_buf));
             }
             else
             {
-                ltrace("发起POST请求: %s \r\n", c->url );
-                ret = http_post( c->url, c->type, c->request, response_buf, sizeof(response_buf) );
+                ltrace("发起POST请求: %s \r\n", c->url);
+                ret = http_post(c->url, c->type, c->request, response_buf, sizeof(response_buf));
+                ltrace("POST：\r\n%s\r\n", GbkString(c->request));
+                ltrace("REPONSE：\r\n%s\r\n", GbkString(response_buf));
             }
-                
-            if (NET_ERROR_NONE == ret)    
-                c->response = strdup( response_buf );
+            if (NET_ERROR_NONE == ret)
+                c->response = strdup(response_buf);
             else
-                c->response = strdup( ErrorString(ret));
-            ltrace("响应码【%d】响应结果：%s \r\n", ret,   c->response );
-            if( http_response_fxc )
-                http_response_fxc( c->id, abs(ret), c->response, strlen( c->response ));
-            free( c->request );
-            free( c->response );
-            free( c );   
-        } 
+                c->response = strdup(ErrorString(ret));
+            ltrace("响应码【%d】响应结果：%s \r\n", ret, GbkString(c->response));
+            if (http_response_fxc)
+                http_response_fxc(c->id, abs(ret), c->response, strlen(c->response));
+            free(c->request);
+            free(c->response);
+            free(c);
+        }
     }
     return NULL;
 }
