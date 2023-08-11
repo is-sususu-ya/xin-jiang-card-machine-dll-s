@@ -21,10 +21,11 @@ if [ "$host" = "571f5f8200ca" ]; then
 		make cc
 	done
 	cd  $root_dir/SPMDll/SPMAPI
-	./build.sh
+	./build_minigui.sh
 	cp ./libSPM_arm.so $release_dir
 	cp ./libSPM_x86.so $release_dir
 	cp ./SPM.h $release_dir
+	cp ../SPMDemo -rf $release_dir
 	cd $root_dir
 	cp ./utils/wintype.h $release_dir
 else
