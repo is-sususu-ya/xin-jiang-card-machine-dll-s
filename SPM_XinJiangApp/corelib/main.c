@@ -71,6 +71,7 @@ static void print_help()
 int reset_interval = 0;
 const char *dst_ip = "127.0.0.1";
 int g_en_http_ui = 0;
+int g_enable_lcd_page_remap = 0;
 
 int main(int argc, char *const argv[])
 {
@@ -88,7 +89,7 @@ int main(int argc, char *const argv[])
 	else
 		sprintf( name, "/var/tmp/.pid_%s.dat", ptr +1 );
 	print_help();
-	while ((opt = getopt(argc, argv, ":dxnkrhi:g:")) != -1)
+	while ((opt = getopt(argc, argv, ":dxnkrhmi:g:")) != -1)
 	{
 		switch (opt)
 		{
@@ -112,6 +113,9 @@ int main(int argc, char *const argv[])
 		case 'n':
 			g_en_http_ui = 1;
 			break;
+		case 'm':
+			g_enable_lcd_page_remap = 0;
+			break;
 		case 'i':
 			reset_interval = atoi( optarg );
 			reset_interval = reset_interval < 0 ? 60*60 : reset_interval;
@@ -127,6 +131,8 @@ int main(int argc, char *const argv[])
 	log_sys = mlog_init(log_name, "sys_run");
 	mlog_setlimitcnt(log_sys, 200, 2 );
 
+	sys_log("%sLCD屏页面重映射\r\n", g_enable_lcd_page_remap ? "开启" : "关闭" );
+	
 	daemon_config( argv[0], name, sys_log );
 	daemon_service(service_run, service_stop);
 	if (b_stop)

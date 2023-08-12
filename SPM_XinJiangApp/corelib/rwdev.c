@@ -75,16 +75,6 @@ static const char *config_def =
 	"talk_back_dwn=http://192.168.1.111:9110/meeting/calling?ip=192.168.1.111&camera=1  # 下对讲\r\n"
 	"talk_third=http://192.168.1.111:9110/calling?msg=answer";
 
-typedef struct tagApConfig
-{
-	int en_udp;
-	char ui_udp[32];
-	int machine_type;
-	char ui_url[256];
-	char talk_back_up[256];
-	char talk_back_dwn[256];
-	char talk_third[256];
-} SystemConfig;
 
 SystemConfig g_apconfig = {0};
 
@@ -918,6 +908,7 @@ static int page_remap(int page, char *buffer)
 			{8, 10},
 		};
 	//clang-format on
+	ltrace("缴费机重新映射画面...\r\n");
 	if (page == 7)
 	{
 		strcpy(buffer, "支付失败;请重新支付");
@@ -936,6 +927,7 @@ int RWDevRegisterCallBack(RWDevCallBack cb)
 }
 
 extern void add_http_url_post_task(int index, const char *url, int type, char *request);
+extern int g_enable_lcd_page_remap;
 
 static void handle_lcd_info(int page, char *buf)
 {
@@ -943,7 +935,8 @@ static void handle_lcd_info(int page, char *buf)
 	char gbk_buffer[1024] = {0};
 	char utf_buffer[1024] = {0};
 	sprintf(url, "%s", g_apconfig.ui_url);
-	page = page_remap(page, buf);
+	if( !g_enable_lcd_page_remap )
+		page = page_remap(page, buf);
 	sprintf(gbk_buffer, "{\"page\":%d,\"msg\":\"%s\"}", page, buf);
 	GBKToUTF8(gbk_buffer, strlen(gbk_buffer), utf_buffer);
 	add_http_url_post_task(0, url, 0, utf_buffer);

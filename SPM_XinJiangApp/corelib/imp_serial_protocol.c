@@ -227,7 +227,9 @@ void sound_play_text(int vol, const char *text)
     send_kd_data(snd_text);
     trace_log("向语音板发送语音：%s 音量：%d \r\n", text, vol );  
 }
+
 extern SystemConfig g_apconfig;
+
 /**
  * @brief 处理动态库或者PC发来的消息
  * 
@@ -417,10 +419,9 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
             if (strlen(serverid) > 0 && strlen(clientId) > 0)
             {
                 trace_log("serverid=%s, clientId=%s", serverid, clientId);
-                memset(g_apconfig.talk_back_dwn, 0, sizeof(g_apconfig.talk_back_dwn));
-                sprintf(g_apconfig.talk_back_dwn, "http://%s:8080/voice/talkback?clientId=%s", serverid, clientId);
-                trace_log("talk_back_dwn=%s", g_apconfig.talk_back_dwn);
-                save_apconfig();
+              //  memset(g_apconfig.talk_back_dwn, 0, sizeof(g_apconfig.talk_back_dwn));
+              //  sprintf(g_apconfig.talk_back_dwn, "http://%s:8080/voice/talkback?clientId=%s", serverid, clientId);
+              //  trace_log("talk_back_dwn=%s", g_apconfig.talk_back_dwn); 
             }
         }
         break;

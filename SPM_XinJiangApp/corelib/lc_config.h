@@ -29,18 +29,29 @@ typedef unsigned short HI_U16;
 typedef struct tagAppConfig
 {
 	HI_S32 flag;
-	char http_server[128];      // httpæœåŠ¡å™¨åœ°å€
-	char tcp_server[128];       // tcp æœåŠ¡å™¨åœ°å€
-	char device_id[64];         // è®¾å¤‡ID
-	char app_key[64];           // è®¾å¤‡ç§˜é’¥
-    char mqtt_server[16];       // mqtt åœ°å€
-    HI_S32 mqtt_port;           // mqtt ç«¯å£
-    char mqtt_project_name[64]; // mqtt é¡¹ç›®å
-    char mqtt_device_id[64];    // mqtt è®¾å¤‡ID
-    char mqtt_username[32];     // ç™»å½•ç”¨æˆ·å
-    char mqtt_password[32];     // ç™»å½•å¯†ç 
-	HI_S32 reserv[32];          // ä¿ç•™å‚æ•°
+	char http_server[128];      // http·şÎñÆ÷µØÖ·
+	char tcp_server[128];       // tcp ·şÎñÆ÷µØÖ·
+	char device_id[64];         // Éè±¸ID
+	char app_key[64];           // Éè±¸ÃØÔ¿
+    char mqtt_server[16];       // mqtt µØÖ·
+    HI_S32 mqtt_port;           // mqtt ¶Ë¿Ú
+    char mqtt_project_name[64]; // mqtt ÏîÄ¿ 
+    char mqtt_device_id[64];    // mqtt Éè±¸ID
+    char mqtt_username[32];     // µÇÂ¼ÓÃ»§ 
+    char mqtt_password[32];     // µÇÂ¼ÃÜÂë
+	HI_S32 reserv[32];          // ±£Áô²ÎÊı
 }AppConfig;
+
+typedef struct tagApConfig
+{
+	int en_udp;
+	char ui_udp[32];
+	int machine_type;
+	char ui_url[256];
+	char talk_back_up[256];
+	char talk_back_dwn[256];
+	char talk_third[256];
+} SystemConfig;
 
 extern AppConfig apConfig;
 
