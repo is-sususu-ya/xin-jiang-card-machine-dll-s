@@ -6,7 +6,7 @@ LIBSRC:=$(wildcard *.c)
 LIBSRC+=$(wildcard utils/*.c) 
 LIBOBJ:=$(LIBSRC:%.c=%.o) 
 
-APP_FLAGS:= -g -Wall -fPIC -I./utils -I./
+APP_FLAGS:= -g -Wall -fPIC -I./utils -I./ -DENABLE_LOG
   
 CC=gcc
 #CC=arm-hisiv400-linux-gcc

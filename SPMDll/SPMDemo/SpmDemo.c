@@ -101,9 +101,11 @@ int main(int argc, char const *argv[])
     hSPM = SPM_Create();
     if (SPM_Open(hSPM, dev))
     {
+        printf("open device success!\n");
         SPM_SetCallBack(hSPM, onSPMEvent);
         while (1)
         {
+            printf("GPIO OUT\r\n");
             if (has_code)
             {
                 has_code = 0;
@@ -115,6 +117,8 @@ int main(int argc, char const *argv[])
 			SPM_GpioOutPut(hSPM, 0, 0 );
             sleep(1);
         }
+    }else{
+        printf("open device failed!\n");
     }
     return 0;
 }
