@@ -117,6 +117,7 @@ static const char *GbkString(const char *utf8String)
     static char buffer[512] = {0};
     memset(buffer, 0, sizeof(buffer));
     UTF8ToGBK(utf8String, strlen(utf8String), buffer);
+    return buffer;
 }
 
 void register_http_url(int id, const char *durl)
@@ -220,7 +221,7 @@ static void *http_work_thread(void *arg)
             if (NET_ERROR_NONE == ret)
                 c->response = strdup(response_buf);
             else
-                c->response = strdup(ErrorString(ret)); 
+                c->response = strdup(ErrorString(ret));
             ltrace("REPONSE£º\r\n%s\r\n", GbkString(response_buf));
             if (http_response_fxc)
                 http_response_fxc(c->id, abs(ret), c->response, strlen(c->response));
