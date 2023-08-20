@@ -114,7 +114,7 @@ int main(int argc, char *const argv[])
 			g_en_http_ui = 1;
 			break;
 		case 'm':
-			g_enable_lcd_page_remap = 0;
+			g_enable_lcd_page_remap = 1;
 			break;
 		case 'i':
 			reset_interval = atoi( optarg );
