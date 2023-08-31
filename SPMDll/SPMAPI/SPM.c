@@ -82,6 +82,8 @@ static int AckPacket(OBJECT_S *pSPM, int cmd);
 static int ReceivePacket(OBJECT_S *pSPM, uint8_t *msg, int size);
 static int SendPacket(OBJECT_S *pSPM, char *msg, int len);
 
+static int callInitSuccess = 0;
+
 #ifdef linux
 static void *ProtocolThread(void *h);
 #else
@@ -425,24 +427,36 @@ EXPAPI BOOL CALLTYPE SPM_GetQrCode(HANDLE h, char *buf)
 	return TRUE;
 }
 
-EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char *server, char *clientId)
+EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phoneId1, char* password1, char* phoneId2, char* password2)
 {
 	OBJECT_S *pSPM = (OBJECT_S *)h;
 	if (INVLAID_OBJ(pSPM))
 		return FALSE;
 	uint8_t buffer[256];
-	uint8_t tmp[256] = {0};
-	char text[256] = {0};
+	uint8_t tmp[256] = { 0 };
+	char text[1024] = { 0 };
+	unsigned char recv_buf[2048] = {0};
+	uint8_t *buf = recv_buf;
 	int len = 0;
-	sprintf(text, "%s;%s", server, clientId);
+	DWORD ltSend = 0;
+	sprintf(text, "%s;%d;%s;%s;%s;%s", server, port, phoneId1, password1, phoneId2, password2);
 	strcpy(tmp + 4, text);
 	len += strlen(text) + 5;
 	len = create_package(0, 0x80, tmp, len, buffer, sizeof(buffer));
 	SendPacket(pSPM, buffer, len);
-	return TRUE;
+	ltSend = GetTickCount() + 1000;
+	while (ltSend > GetTickCount())
+	{
+		if (callInitSuccess == 1)
+		{
+			callInitSuccess = 0;
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
-EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, char *phoneId, int timeout)
+EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeout)
 {
 	OBJECT_S *pSPM = (OBJECT_S *)h;
 	if (INVLAID_OBJ(pSPM))
@@ -451,7 +465,7 @@ EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, char *phoneId, int timeout)
 	uint8_t tmp[256] = {0};
 	char text[256] = {0};
 	int len = 0;
-	sprintf(text, "%s", phoneId);
+	sprintf(text, "%d;%s", phoneId);
 	strcpy(tmp + 4, text);
 	len += strlen(text) + 5;
 	len = create_package(0, 0x81, tmp, 4, buffer, sizeof(buffer));
@@ -804,6 +818,15 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 						}
 						MTRACE_LOG(pSPM->hLog, " last_stat 【%d】！！\r\n", last_stat);
 						break;
+					case 0x90:
+						MTRACE_LOG(pSPM->hLog, "收到NUC端的连线通知！\r\n");
+						NoticeEvent(pSPM, SPM_EVT_CALL);
+						break;
+					case 0x91:
+						MTRACE_LOG(pSPM->hLog, "对讲数据初始化成功通知！\r\n");
+						callInitSuccess = 1;
+						break;
+
 					default:
 						MTRACE_LOG(pSPM->hLog, "未实现的内容【%d】！！\r\n", buf[4]);
 						break;

@@ -71,8 +71,10 @@ static const char *config_def =
 	"ui_type=1	# UI更新方式 0：UDP 1：http\r\n"
 	"ui_udp=192.168.1.132 # UDP更新界面方式，NUC地址\r\n"
 	"ui_url=http://192.168.1.111:9110/autorun #ui控制\r\n"
-	"talk_back_up=http://192.168.1.111:9110/meeting/calling?ip=192.168.1.111&camera=0  # 上对讲\r\n"
-	"talk_back_dwn=http://192.168.1.111:9110/meeting/calling?ip=192.168.1.111&camera=1  # 下对讲\r\n"
+	// "talk_back_up=http://192.168.1.111:9110/meeting/calling?ip=192.168.1.111&camera=0  # 上对讲\r\n"
+	// "talk_back_dwn=http://192.168.1.111:9110/meeting/calling?ip=192.168.1.111&camera=1  # 下对讲\r\n"
+	"talk_back_up=http://172.16.13.16:9110/calling?camera=0&type=520  # 上对讲\r\n"
+	"talk_back_dwn=http://172.16.13.16:9110/calling?camera=1&type=520  # 下对讲\r\n"
 	"talk_third=http://192.168.1.111:9110/calling?msg=answer";
 
 
@@ -1007,6 +1009,8 @@ static void load_config()
 		strcpy(g_apconfig.talk_back_dwn, valstring);
 }
 
+extern int test_interface();
+
 int RWDevStart()
 {
 	char log_name[129] = {0};
@@ -1037,6 +1041,8 @@ int RWDevStart()
 	else
 		udp_sock = sock_udp_bindhost(1234, NULL);
 	ServicesStart();
+	RPC_startup();
+	test_interface();
 	// LED_Display("LINE1=\"德亚交通技术有限公司\" LINE2=\" \" COLOR=RED");
 	local_protocol_init();
 	mqtt_init();
