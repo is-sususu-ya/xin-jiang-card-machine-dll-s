@@ -231,7 +231,6 @@ void sound_play_text(int vol, const char *text)
 
 extern SystemConfig g_apconfig;
 
-<<<<<<< HEAD
 static int write_file(const char *name, char *da, int len)
 {
     FILE *file = fopen(name, "w");
@@ -247,12 +246,6 @@ int init_calling_data(char *input)
     printf("%s;%d\r\n", __func__, __LINE__);
     cJSON *root;
     cJSON *node = NULL;
-=======
-void init_calling_data(char *input)
-{
-    printf("%s;%d\r\n", __func__, __LINE__);
-    cJSON *root;
->>>>>>> feece9679f41cfe91447ca26b9467578960e885d
     int index = 0, ret = 0;
     char response[1024] = {0};
     char response_gbk[1024] = {0};
@@ -286,18 +279,14 @@ void init_calling_data(char *input)
     char utf_buffer[1024];
     cJSON_Delete(root);
     GBKToUTF8(json_str, strlen(json_str), utf_buffer);
-<<<<<<< HEAD
     write_file("call.json", json_str, strlen(json_str));
     free(json_str);
-=======
->>>>>>> feece9679f41cfe91447ca26b9467578960e885d
 init_request:
     ret = http_post("http://172.16.13.180:85/calling", 0, utf_buffer, response, sizeof(response));
     UTF8ToGBK(response, strlen(response), response_gbk);
     if (NET_ERROR_NONE == ret)
     {
         trace_log("RESPONSE:%s \r\n", response);
-<<<<<<< HEAD
         root = cJSON_Parse(response);
         if (!root)
         {
@@ -308,18 +297,6 @@ init_request:
             }
         }
         node = cJSON_GetObjectItem(root, "msg");
-=======
-        cJSON *root1 = cJSON_Parse(response);
-        if (!root1)
-        {
-            if (index++ < 3)
-            {
-            trace_log("后台响应非JSON\r\n");
-            goto init_request;
-            }
-        }
-        cJSON *node = cJSON_GetObjectItem(root1, "msg");
->>>>>>> feece9679f41cfe91447ca26b9467578960e885d
         if (!node || !node->valuestring)
         {
             if (index++ < 3)
@@ -331,23 +308,7 @@ init_request:
         if (strcmp(node->valuestring, "success") == 0)
         {
             trace_log("上报对讲信息成功！\r\n");
-<<<<<<< HEAD
             return 0;
-=======
-            // 将 JSON 数据写入本地文件
-            FILE *file = fopen("call.json", "w");
-            if (file)
-            {
-                fputs(json_str, file);
-                fclose(file);
-            }
-            else
-            {
-                fprintf(stderr, "Error opening file for writing.\n");
-            }
-            // 释放 JSON 字符串内存
-            free(json_str);
->>>>>>> feece9679f41cfe91447ca26b9467578960e885d
         }
     }
     else
@@ -359,10 +320,7 @@ init_request:
         }
         trace_log("请求后台没有正确的返回结果!！\r\n");
     }
-<<<<<<< HEAD
     return -1;
-=======
->>>>>>> feece9679f41cfe91447ca26b9467578960e885d
 }
 
 /**
@@ -509,7 +467,6 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         }
         len = create_package(1, 0x60, NULL, 0, buffer, sizeof(buffer));
         break;
-        
     case 0x70:
         v1 = param[0];
         v2 = param[1];
@@ -538,15 +495,11 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         trace_log("初始化语音对讲参数..\r\n");
         char input[1024] = {0};
         memcpy(input, param + 4, plen - 5);
-<<<<<<< HEAD
         int ret =  init_calling_data(input);
         if(ret == 0)
         {
             spm_call_init_success();
         }
-=======
-        init_calling_data(input);
->>>>>>> feece9679f41cfe91447ca26b9467578960e885d
         break;
     case 0x81:
     {
@@ -965,7 +918,6 @@ void spm_answer_talk()
     if (theApp.tty_fd > 0)
         tty_write(theApp.tty_fd, buffer, len);
     SendUnLock();
-<<<<<<< HEAD
 }
 
 void spm_call_init_success()
@@ -981,8 +933,6 @@ void spm_call_init_success()
     if (theApp.tty_fd > 0)
         tty_write(theApp.tty_fd, buffer, len);
     SendUnLock();
-=======
->>>>>>> feece9679f41cfe91447ca26b9467578960e885d
 }
 
 void spm_send_qrcode(int index, const char *qrcode)
