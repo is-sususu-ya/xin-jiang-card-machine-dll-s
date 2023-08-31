@@ -22,6 +22,7 @@
 #include "imp_http_task.h"
 #include "lc_config.h"
 #include "spm_config.h"
+#include "cJSON.h"
 
 typedef unsigned long long UInt64;
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -111,14 +112,14 @@ static int32_t bcd2len(uint8_t *bcd)
 
 /**
  * @brief Create a package object
- * 
+ *
  * @param type 0请求帧，1响应帧
- * @param cmd 
- * @param buf 
- * @param len 
- * @param dst 
- * @param max_len 
- * @return int32_t 
+ * @param cmd
+ * @param buf
+ * @param len
+ * @param dst
+ * @param max_len
+ * @return int32_t
  */
 static int32_t create_package(int type, uint32_t cmd, const uint8_t *buf, uint32_t len, uint8_t *dst, uint32_t max_len)
 {
@@ -192,16 +193,16 @@ static int send_kd_data(const char *stVoice)
     dat[1] = (len >> 8) & 0xff;
     dat[2] = len & 0xff;
     dat[3] = 0x01;
-    dat[4] = 0x00;  
+    dat[4] = 0x00;
 #if defined(TSP86)
     tty_port = open(DEV_SOUND_PORT, O_RDWR);
     if (tty_port < 0)
     {
-        trace_log("串口打开失败[%s]！\r\n", DEV_SOUND_PORT );
+        trace_log("串口打开失败[%s]！\r\n", DEV_SOUND_PORT);
         return -1;
     }
-    tty_raw(tty_port, 9600,8, 0);
-    strcpy(dat + 5, stVoice); 
+    tty_raw(tty_port, 9600, 8, 0);
+    strcpy(dat + 5, stVoice);
     tty_write(tty_port, dat, total);
     tty_close(tty_port);
 #endif
@@ -210,12 +211,12 @@ static int send_kd_data(const char *stVoice)
 
 void sound_play_du()
 {
-	char snd_text[32] = {"[v2][x1]sound123"};
-	send_kd_data(snd_text); 
+    char snd_text[32] = {"[v2][x1]sound123"};
+    send_kd_data(snd_text);
 }
- 
+
 void sound_play_text(int vol, const char *text)
-{ 
+{
     char snd_text[512] = {0};
     int v = 3; // 音量
     int s = 5;
@@ -223,21 +224,111 @@ void sound_play_text(int vol, const char *text)
     int m = 3;
     v = vol;
     v = (v <= 0 || v > 8) ? 4 : v;
-    sprintf(snd_text, "[v%d][s%d][t%d][m%d]%s", v, s, t, m, text); 
+    sprintf(snd_text, "[v%d][s%d][t%d][m%d]%s", v, s, t, m, text);
     send_kd_data(snd_text);
-    trace_log("向语音板发送语音：%s 音量：%d \r\n", text, vol );  
+    trace_log("向语音板发送语音：%s 音量：%d \r\n", text, vol);
 }
 
 extern SystemConfig g_apconfig;
 
+void init_calling_data(char *input)
+{
+    printf("%s;%d\r\n", __func__, __LINE__);
+    cJSON *root;
+    int index = 0, ret = 0;
+    char response[1024] = {0};
+    char response_gbk[1024] = {0};
+
+    // 解析字符串 XX;XX
+    char *token = strtok(input, ";");
+    char *server = token;
+    token = strtok(NULL, ";");
+    char *port = token;
+    token = strtok(NULL, ";");
+    char *phoneId1 = token;
+    token = strtok(NULL, ";");
+    char *password1 = token;
+    token = strtok(NULL, ";");
+    char *phoneId2 = token;
+    token = strtok(NULL, ";");
+    char *password2 = token;
+    sprintf(g_apconfig.talk_back_dwn, "http://%s:%d/calling?camera=1&type=520", server, port);
+    sprintf(g_apconfig.talk_back_up, "http://%s:%d/calling?camera=0&type=520", server, port);
+    // 创建 JSON 对象并设置对应的键值
+    root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "server", server);
+    cJSON_AddStringToObject(root, "port", port);
+    cJSON_AddStringToObject(root, "phoneId1", phoneId1);
+    cJSON_AddStringToObject(root, "password1", password1);
+    cJSON_AddStringToObject(root, "phoneId2", phoneId2);
+    cJSON_AddStringToObject(root, "password2", password2);
+
+    // 将 JSON 对象转换为字符串
+    char *json_str = cJSON_Print(root);
+    char utf_buffer[1024];
+    cJSON_Delete(root);
+    GBKToUTF8(json_str, strlen(json_str), utf_buffer);
+init_request:
+    ret = http_post("http://172.16.13.180:85/calling", 0, utf_buffer, response, sizeof(response));
+    UTF8ToGBK(response, strlen(response), response_gbk);
+    if (NET_ERROR_NONE == ret)
+    {
+        trace_log("RESPONSE:%s \r\n", response);
+        cJSON *root1 = cJSON_Parse(response);
+        if (!root1)
+        {
+            if (index++ < 3)
+            {
+            trace_log("后台响应非JSON\r\n");
+            goto init_request;
+            }
+        }
+        cJSON *node = cJSON_GetObjectItem(root1, "msg");
+        if (!node || !node->valuestring)
+        {
+            if (index++ < 3)
+            {
+                trace_log("请求后台响应异常！\r\n");
+                goto init_request;
+            }
+        }
+        if (strcmp(node->valuestring, "success") == 0)
+        {
+            trace_log("上报对讲信息成功！\r\n");
+            // 将 JSON 数据写入本地文件
+            FILE *file = fopen("call.json", "w");
+            if (file)
+            {
+                fputs(json_str, file);
+                fclose(file);
+            }
+            else
+            {
+                fprintf(stderr, "Error opening file for writing.\n");
+            }
+            // 释放 JSON 字符串内存
+            free(json_str);
+        }
+    }
+    else
+    {
+        if (index++ < 3)
+        {
+            trace_log("请求后台没有合法返回，重新请求一次,第【%d】次！\r\n", index + 1);
+            goto init_request;
+        }
+        trace_log("请求后台没有正确的返回结果!！\r\n");
+    }
+}
+
 /**
  * @brief 处理动态库或者PC发来的消息
- * 
- * @param pHvObj 
- * @param type 
- * @param cmd 
- * @param param 
- * @param len 
+ *
+ * @param pHvObj
+ * @param type
+ * @param cmd
+ * @param param
+ * @param len
  */
 static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd, uint8_t *param, int32_t plen)
 {
@@ -399,36 +490,32 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         }
         break;
     case 0x80:
-        {
-            trace_log("初始化语音对讲参数..");
-            char serverid[256] = {0};
-            char clientId[64] = {0};
-            char input[256] = {0};
-            memcpy(input, param + 4, plen - 5);
-            // 解析字符串 XX;XX
-            char *p = strtok(input, ";");
-            if (p)
-            {
-                strcpy(serverid, p);
-                p = strtok(NULL, ";");
-                if (p)
-                {
-                    strcpy(clientId, p);
-                }
-            }
-            if (strlen(serverid) > 0 && strlen(clientId) > 0)
-            {
-                trace_log("serverid=%s, clientId=%s", serverid, clientId);
-              //  memset(g_apconfig.talk_back_dwn, 0, sizeof(g_apconfig.talk_back_dwn));
-              //  sprintf(g_apconfig.talk_back_dwn, "http://%s:8080/voice/talkback?clientId=%s", serverid, clientId);
-              //  trace_log("talk_back_dwn=%s", g_apconfig.talk_back_dwn); 
-            }
-        }
+        trace_log("初始化语音对讲参数..\r\n");
+        char input[1024] = {0};
+        memcpy(input, param + 4, plen - 5);
+        init_calling_data(input);
         break;
     case 0x81:
-        trace_log("触发语音对讲..");
-		add_http_get_task(0, g_apconfig.talk_back_dwn);
-        break;
+    {
+        char input[1024] = {0};
+        memcpy(input, param + 4, plen - 5);
+        // 解析字符串 XX;XX
+        char *token = strtok(input, ";");
+        char *index = token;
+        token = strtok(NULL, ";");
+        char *phoneId = token;
+        if (strncmp(index, '0', 1) == 0)
+        {
+            trace_log("触发上工位语音对讲..");
+            add_http_get_task(0, g_apconfig.talk_back_dwn);
+        }
+        else if (strncmp(index, '1', 1) == 0)
+        {
+            trace_log("触发下工位语音对讲..");
+            add_http_get_task(0, g_apconfig.talk_back_up);
+        }
+    }
+    break;
     case 0x82:
         trace_log("应答语音对讲.");
         break;
@@ -453,12 +540,12 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
 
 /**
  * @brief 处理上位机发来的响应消息
- * 
- * @param pHvObj 
- * @param type 
- * @param cmd 
- * @param param 
- * @param len 
+ *
+ * @param pHvObj
+ * @param type
+ * @param cmd
+ * @param param
+ * @param len
  */
 static void process_reply_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd, uint8_t *param, int32_t plen)
 {
@@ -477,9 +564,9 @@ static void process_reply_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd, 
 /**
  * @brief 处理上位机发来的语音帧，TFI协议，兼容性考虑
  * A[v3][s5][t5][m3]阿斯顿发
- * @param pHvObj 
- * @param raw 
- * @param len 
+ * @param pHvObj
+ * @param raw
+ * @param len
  */
 static void process_sound_data(APP_OBJECT_S *pHvObj, int8_t *raw, int32_t len)
 {
@@ -647,6 +734,7 @@ static int32_t recv_reply_package_by_tty(APP_OBJECT_S *pHvObj, uint8_t *buf, uin
             trace_log("CRC 错误！[%s]\r\n", show_hex(buffer, total));
             goto frame_error;
         }
+        printf("长度%d\r\n", param_len);
         process_command_data(pHvObj, DATA_TTY, cmd, buffer + 7, param_len);
     }
     else if (rc == 0xa1)
@@ -798,32 +886,32 @@ void *protocol_thread(void *arg)
 void spm_gpio_change(int di_last, int di_this)
 {
     char buf[32] = {0};
-    char buffer[64] = {0}; 
+    char buffer[64] = {0};
     int32_t len;
-    memcpy(buf, &di_this, 4); 
-    trace_log("上报io状态：%#x \r\n", di_this );
+    memcpy(buf, &di_this, 4);
+    trace_log("上报io状态：%#x \r\n", di_this);
     len = create_package(0, 0x80, (uint8_t *)buf, 4, buffer, sizeof(buffer));
     SendLock();
     if (theApp.peer_fd > 0)
-        sock_write_n_bytes(theApp.peer_fd, buffer, len); 
-    if( theApp.tty_fd > 0 )
-        tty_write(theApp.tty_fd, buffer, len );   
-    SendUnLock(); 
+        sock_write_n_bytes(theApp.peer_fd, buffer, len);
+    if (theApp.tty_fd > 0)
+        tty_write(theApp.tty_fd, buffer, len);
+    SendUnLock();
 }
 
 void spm_answer_talk()
-{ 
-    int32_t len; 
+{
+    int32_t len;
     char buf[32] = {0};
-    char buffer[64] = {0}; 
+    char buffer[64] = {0};
     trace_log("上报语音接入.\r\n");
     len = create_package(0, 0x90, (uint8_t *)buf, 4, buffer, sizeof(buffer));
     SendLock();
     if (theApp.peer_fd > 0)
-        sock_write_n_bytes(theApp.peer_fd, buffer, len); 
-    if( theApp.tty_fd > 0 )
-        tty_write(theApp.tty_fd, buffer, len );   
-    SendUnLock(); 
+        sock_write_n_bytes(theApp.peer_fd, buffer, len);
+    if (theApp.tty_fd > 0)
+        tty_write(theApp.tty_fd, buffer, len);
+    SendUnLock();
 }
 
 void spm_send_qrcode(int index, const char *qrcode)

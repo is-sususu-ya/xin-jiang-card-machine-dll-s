@@ -18,6 +18,7 @@
 #include "vlprotocol.h"
 #include "lc_config.h"
 #include "utils_ptrlist.h"
+#include "lc_config.h"
 
 static char message_url[128] = {"http://192.168.0.123:8080/api/message"};
 static char request_url[128] = {"http://192.168.0.123:8080/api/qrcode"};
