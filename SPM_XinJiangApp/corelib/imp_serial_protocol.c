@@ -509,6 +509,7 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         }
         len = create_package(1, 0x60, NULL, 0, buffer, sizeof(buffer));
         break;
+        
     case 0x70:
         v1 = param[0];
         v2 = param[1];
