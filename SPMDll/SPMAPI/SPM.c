@@ -435,10 +435,14 @@ EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phone
 	uint8_t buffer[256];
 	uint8_t tmp[256] = { 0 };
 	char text[1024] = { 0 };
+<<<<<<< HEAD
 	unsigned char recv_buf[2048] = {0};
 	uint8_t *buf = recv_buf;
 	int len = 0;
 	DWORD ltSend = 0;
+=======
+	int len = 0;
+>>>>>>> feece9679f41cfe91447ca26b9467578960e885d
 	sprintf(text, "%s;%d;%s;%s;%s;%s", server, port, phoneId1, password1, phoneId2, password2);
 	strcpy(tmp + 4, text);
 	len += strlen(text) + 5;
@@ -455,6 +459,25 @@ EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phone
 	}
 	return FALSE;
 }
+<<<<<<< HEAD
+=======
+//EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char *server, char *clientId)
+//{
+//	OBJECT_S *pSPM = (OBJECT_S *)h;
+//	if (INVLAID_OBJ(pSPM))
+//		return FALSE;
+//	uint8_t buffer[256];
+//	uint8_t tmp[256] = {0};
+//	char text[256] = {0};
+//	int len = 0;
+//	sprintf(text, "%s;%s", server, clientId);
+//	strcpy(tmp + 4, text);
+//	len += strlen(text) + 5;
+//	len = create_package(0, 0x80, tmp, len, buffer, sizeof(buffer));
+//	SendPacket(pSPM, buffer, len);
+//	return TRUE;
+//}
+>>>>>>> feece9679f41cfe91447ca26b9467578960e885d
 
 EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeout)
 {
@@ -822,11 +845,14 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 						MTRACE_LOG(pSPM->hLog, "收到NUC端的连线通知！\r\n");
 						NoticeEvent(pSPM, SPM_EVT_CALL);
 						break;
+<<<<<<< HEAD
 					case 0x91:
 						MTRACE_LOG(pSPM->hLog, "对讲数据初始化成功通知！\r\n");
 						callInitSuccess = 1;
 						break;
 
+=======
+>>>>>>> feece9679f41cfe91447ca26b9467578960e885d
 					default:
 						MTRACE_LOG(pSPM->hLog, "未实现的内容【%d】！！\r\n", buf[4]);
 						break;
