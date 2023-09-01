@@ -241,49 +241,54 @@ static int write_file(const char *name, char *da, int len)
     }
 }
 
+static const char *int32toString(int code)
+{
+    static char buffer[128] = {0};
+    sprintf(buffer, "%d", code);
+    return buffer;
+}
+
 int init_calling_data(char *input)
 {
-    printf("%s;%d\r\n", __func__, __LINE__);
     cJSON *root;
     cJSON *node = NULL;
+    char *json_str = NULL;
     int index = 0, ret = 0;
     char response[1024] = {0};
     char response_gbk[1024] = {0};
-
+    char server[128] = {0};
+    char utf_buffer[1024];
+    int port;
+    char phoneId[128] = {0};
+    char password[128] = {0};
     // 解析字符串 XX;XX
-    char *token = strtok(input, ";");
-    char *server = token;
-    token = strtok(NULL, ";");
-    char *port = token;
-    token = strtok(NULL, ";");
-    char *phoneId = token;
-    token = strtok(NULL, ";");
-    char *password = token;
+    sscanf(input, "%[^;]%d;%[^;]%[^;]", server, &port, phoneId, password);
+
+#define MAX_TRY_COUNT 2
 
     // 创建 JSON 对象并设置对应的键值
     root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "server", server);
-    cJSON_AddStringToObject(root, "port", port);
+    cJSON_AddStringToObject(root, "port", int32toString(port));
     cJSON_AddStringToObject(root, "phoneId", phoneId);
     cJSON_AddStringToObject(root, "password", password);
 
     // 将 JSON 对象转换为字符串
-    char *json_str = cJSON_Print(root);
-    char utf_buffer[1024];
+    json_str = cJSON_Print(root);
     cJSON_Delete(root);
     GBKToUTF8(json_str, strlen(json_str), utf_buffer);
     write_file("call.json", json_str, strlen(json_str));
     free(json_str);
 init_request:
     ret = http_post(g_apconfig.talk_third, 0, utf_buffer, response, sizeof(response));
-    UTF8ToGBK(response, strlen(response), response_gbk);
     if (NET_ERROR_NONE == ret)
     {
-        trace_log("RESPONSE:%s \r\n", response);
-        root = cJSON_Parse(response);
+        UTF8ToGBK(response, strlen(response), response_gbk);
+        trace_log("RESPONSE:%s \r\n", response_gbk);
+        root = cJSON_Parse(response_gbk);
         if (!root)
         {
-            if (index++ < 3)
+            if (index++ < MAX_TRY_COUNT)
             {
                 trace_log("后台响应非JSON\r\n");
                 goto init_request;
@@ -292,7 +297,7 @@ init_request:
         node = cJSON_GetObjectItem(root, "msg");
         if (!node || !node->valuestring)
         {
-            if (index++ < 3)
+            if (index++ < MAX_TRY_COUNT)
             {
                 trace_log("请求后台响应异常！\r\n");
                 goto init_request;
@@ -306,14 +311,36 @@ init_request:
     }
     else
     {
-        if (index++ < 3)
+        if (index++ < MAX_TRY_COUNT)
         {
             trace_log("请求后台没有合法返回，重新请求一次,第【%d】次！\r\n", index + 1);
             goto init_request;
         }
         trace_log("请求后台没有正确的返回结果!！\r\n");
     }
-    return -1;
+    return 1;
+}
+
+static int strendwith(const char *input, const char *endstr)
+{
+    if (strlen(input) < strlen(endstr))
+        return 0;
+    return strcmp(input + strlen(input) - strlen(endstr), endstr) == 0;
+}
+
+static int update_phone_id(char *url, const char *phoneId)
+{
+    char *next = strstr(url, "phoneId=");
+    if (next)
+        next += strlen("phoneId=");
+    if (strendwith(url, "phoneId="))
+        strcat(url, phoneId);
+    else
+    {
+        if (next)
+            strcpy(next, phoneId);
+    }
+    trace_log("update url:%s\r\n", url);
 }
 
 /**
@@ -332,15 +359,19 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
     char url[256] = {0};
     int32_t len = 0;
     int32_t id = 0;
+    int ret = 0;
     int32_t index, timeout, ptout;
     int32_t v1, v2, v3;
     int32_t ctype = 0;
+    char phoneId[128] = {0};
+    int code;
     int nNumber, nColor, nFormat;
     struct timeval m_tv;
     struct tm m_tm;
     time_t now;
     uint32_t tmp_buf[20] = {0};
     int reboot = 0;
+    char input[1024] = {0};
     PRINTF("cmd:%#x \r\n", cmd);
     switch (cmd)
     {
@@ -486,41 +517,42 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         break;
     case 0x80:
         trace_log("初始化语音对讲参数..\r\n");
-        char input[1024] = {0};
         memcpy(input, param + 4, plen - 5);
-        int ret =  init_calling_data(input);
-        if(ret == 0)
-        {
-            spm_call_init_success();
-        }
+        ret = init_calling_data(input);
+        spm_call_init_success(ret);
         break;
     case 0x81:
     {
-        char input[1024] = {0};
-        char url[256] = {0};
-        
         memcpy(input, param + 4, plen - 5);
-        // 解析字符串 XX;XX
-        char *token = strtok(input, ";");
-        char *index = token;
-        token = strtok(NULL, ";");
-        char *phoneId = token;        
-        if (strncmp(index, "0", 1) == 0)
+        sscanf((char *)param, "%d;%[^;]", index, phoneId);
+        if (index == 0)
         {
             trace_log("触发上工位语音对讲..");
-            sprintf(url, "%s%s", g_apconfig.talk_back_up, phoneId);
+            strcpy(url, g_apconfig.talk_back_up);
+            update_phone_id(url, phoneId);
             add_http_get_task(0, url);
         }
-        else if (strncmp(index, "1", 1) == 0)
+        else if (index == 1)
         {
             trace_log("触发下工位语音对讲..");
-            sprintf(url, "%s%s", g_apconfig.talk_back_dwn, phoneId);
+            strcpy(url, g_apconfig.talk_back_dwn);
+            update_phone_id(url, phoneId);
             add_http_get_task(0, url);
         }
     }
     break;
     case 0x82:
-        trace_log("应答语音对讲.");
+        trace_log("接听控制.");
+        sscanf((char *)param, "%[^;];%d", phoneId, &code);
+        // 如果是默认接听的话，就无所谓了
+        if (code == 100)
+        {
+            trace_log("接听.\r\n");  
+        }
+        else if (code == 101)
+        {
+            trace_log("挂机\r\n");  
+        }
         break;
     default:
         break;
@@ -917,11 +949,12 @@ void spm_answer_talk()
     SendUnLock();
 }
 
-void spm_call_init_success()
+void spm_call_init_success(int ret)
 {
     int32_t len;
     char buf[32] = {0};
     char buffer[64] = {0};
+    buf[0] = ret & 0xff;
     trace_log("上报对讲初始化成功.\r\n");
     len = create_package(0, 0x91, (uint8_t *)buf, 4, buffer, sizeof(buffer));
     SendLock();

@@ -427,14 +427,14 @@ EXPAPI BOOL CALLTYPE SPM_GetQrCode(HANDLE h, char *buf)
 	return TRUE;
 }
 
-EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phoneId, char* password)
+EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char *server, int port, char *phoneId, char *password)
 {
 	OBJECT_S *pSPM = (OBJECT_S *)h;
 	if (INVLAID_OBJ(pSPM))
 		return FALSE;
 	uint8_t buffer[256];
-	uint8_t tmp[256] = { 0 };
-	char text[1024] = { 0 };
+	uint8_t tmp[256] = {0};
+	char text[1024] = {0};
 	unsigned char recv_buf[2048] = {0};
 	uint8_t *buf = recv_buf;
 	int len = 0;
@@ -444,28 +444,24 @@ EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phone
 	len += strlen(text) + 5;
 	len = create_package(0, 0x80, tmp, len, buffer, sizeof(buffer));
 	SendPacket(pSPM, buffer, len);
-	ltSend = GetTickCount() + 1000;
-	while (ltSend > GetTickCount())
-	{
-		if (callInitSuccess == 1)
-		{
-			callInitSuccess = 0;
-			return TRUE;
-		}
-	}
-	return FALSE;
+	ltSend = GetTickCount() + 5000;
+	callInitSuccess = 0;
+	// 简单操作，等待5秒
+	while (ltSend > GetTickCount() && !callInitSuccess)
+		usleep(100000);
+	return callInitSuccess == 1; // 1:成功 其他失败
 }
 
 EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeout)
 {
-	OBJECT_S *pSPM = (OBJECT_S *)h;
-	if (INVLAID_OBJ(pSPM))
-		return FALSE;
 	uint8_t buffer[256];
 	uint8_t tmp[256] = {0};
 	char text[256] = {0};
 	int len = 0;
-	sprintf(text, "%d;%s", phoneId);
+	OBJECT_S *pSPM = (OBJECT_S *)h;
+	if (INVLAID_OBJ(pSPM))
+		return FALSE;
+	sprintf(text, "%d;%s", index == 0 ? 0 : 1, phoneId);
 	strcpy(tmp + 4, text);
 	len += strlen(text) + 5;
 	len = create_package(0, 0x81, tmp, 4, buffer, sizeof(buffer));
@@ -824,9 +820,8 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 						break;
 					case 0x91:
 						MTRACE_LOG(pSPM->hLog, "对讲数据初始化成功通知！\r\n");
-						callInitSuccess = 1;
-						break;
-
+						callInitSuccess = param[0] == 0 ? 1 : 2; // 0成功，其他失败
+						break;									 // 通知NUC端初始化成功
 					default:
 						MTRACE_LOG(pSPM->hLog, "未实现的内容【%d】！！\r\n", buf[4]);
 						break;
@@ -927,7 +922,7 @@ static int SendPacket(OBJECT_S *pSPM, char *msg, int len)
 	{
 		if (pSPM->fd == INVALID_SOCKET)
 		{
-			MTRACE_LOG(pSPM->hLog, "Socket Not Connected Yet!\n"); 
+			MTRACE_LOG(pSPM->hLog, "Socket Not Connected Yet!\n");
 			Mutex_Unlock(pSPM);
 			return FALSE;
 		}

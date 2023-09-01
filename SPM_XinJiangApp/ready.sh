@@ -40,8 +40,7 @@ do
 		arm-hisiv100nptl-linux-strip $release_lib/*.so*
 	fi
 	if [ "$list" = "TSP86" ]; then
-		cp -rvf ./lib/v100lib/*.so* $release_lib 
-		cp corelib/pay /nfsroot/work/dst_TSP86/pay/
+		cp -rvf ./lib/v100lib/*.so* $release_lib  
 		arm-hisiv100nptl-linux-strip $release_lib/*.so*
 	fi
 	if [ "$list" = "TMP3520TEST" ]; then

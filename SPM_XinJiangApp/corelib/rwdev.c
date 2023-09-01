@@ -71,8 +71,9 @@ static const char *config_def =
 	"ui_type=1	# UI更新方式 0：UDP 1：http\r\n"
 	"ui_udp=192.168.1.132 # UDP更新界面方式，NUC地址\r\n"
 	"ui_url=http://192.168.1.111:9110/autorun #ui控制\r\n"
-	"talk_back_up=http://172.16.13.16:9110/xjCalling?camera=0&phoneId=  # 上对讲\r\n"
-	"talk_back_dwn=http://172.16.13.16:9110/xjCalling?camera=1&phoneId=  # 下对讲\r\n"
+	"talk_ctrl=://172.16.13.16:9110/calling     # 接听控制接口 \r\n"
+	"talk_back_up=http://172.16.13.16:9110/xjCalling?camera=0&phoneId=1001  # 上对讲\r\n"
+	"talk_back_dwn=http://172.16.13.16:9110/xjCalling?camera=1&phoneId=1002  # 下对讲\r\n"
 	"talk_third=http://172.16.13.16:9110/sipInit";
 
 
@@ -792,12 +793,7 @@ static void io_cb(int di_last, int di_this)
 	DataHeader header;
 	IO_STAT_HEADER_INIT(header, 0, di_last, di_this);
 	Client_send(NULL, &header, NULL);
-	spm_gpio_change(di_last, di_this);
-	// if (first_calling == 1)
-	// {
-	// 	first_calling = 0;
-	// 	return;
-	// }
+	spm_gpio_change(di_last, di_this); 
 	if (!(di_last & PIN_UP_HELP) && (di_this & PIN_UP_HELP))
 	{
 		ltrace("上工位求助，触发对讲.\r\n");
@@ -996,6 +992,10 @@ static void load_config()
 	if (valstring)
 		strcpy(g_apconfig.talk_back_up, valstring);
 
+	valstring = ConfigGetKey("talk_back_dwn");
+	if (valstring)
+		strcpy(g_apconfig.talk_back_dwn, valstring);
+
 	valstring = ConfigGetKey("talk_third");
 	if (valstring)
 		strcpy(g_apconfig.talk_third, valstring);
@@ -1006,11 +1006,7 @@ static void load_config()
 	ltrace("g_apconfig.talk_third:%s\r\n", g_apconfig.talk_third);
 	ltrace("en udp lcd:%d \r\n", g_apconfig.en_udp);
 	ltrace("udp IP:%s \r\n", g_apconfig.ui_udp);
-	ltrace("udp Url:%s \r\n", g_apconfig.ui_url);
-
-	valstring = ConfigGetKey("talk_back_dwn");
-	if (valstring)
-		strcpy(g_apconfig.talk_back_dwn, valstring);
+	ltrace("udp Url:%s \r\n", g_apconfig.ui_url); 
 }
 
 extern int test_interface();
