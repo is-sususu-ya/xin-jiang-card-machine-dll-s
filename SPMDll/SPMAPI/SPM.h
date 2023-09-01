@@ -47,7 +47,7 @@ EXPAPI BOOL CALLTYPE SPM_EnableQrCode(HANDLE h, BOOL en);
 EXPAPI BOOL CALLTYPE SPM_GetQrCodeEx(HANDLE h, int *index, char *buf);
 EXPAPI BOOL CALLTYPE SPM_GetQrCode(HANDLE h, char *buf); 
 
-EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phoneId1, char* password1, char* phoneId2, char* password2);
+EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phoneId, char* password);
 EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeout);
 EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int timeout);
 

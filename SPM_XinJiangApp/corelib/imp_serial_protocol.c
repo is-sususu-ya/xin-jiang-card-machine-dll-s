@@ -256,23 +256,16 @@ int init_calling_data(char *input)
     token = strtok(NULL, ";");
     char *port = token;
     token = strtok(NULL, ";");
-    char *phoneId1 = token;
+    char *phoneId = token;
     token = strtok(NULL, ";");
-    char *password1 = token;
-    token = strtok(NULL, ";");
-    char *phoneId2 = token;
-    token = strtok(NULL, ";");
-    char *password2 = token;
-    sprintf(g_apconfig.talk_back_dwn, "http://%s:%d/calling?camera=1&type=520", server, port);
-    sprintf(g_apconfig.talk_back_up, "http://%s:%d/calling?camera=0&type=520", server, port);
+    char *password = token;
+
     // 创建 JSON 对象并设置对应的键值
     root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "server", server);
     cJSON_AddStringToObject(root, "port", port);
-    cJSON_AddStringToObject(root, "phoneId1", phoneId1);
-    cJSON_AddStringToObject(root, "password1", password1);
-    cJSON_AddStringToObject(root, "phoneId2", phoneId2);
-    cJSON_AddStringToObject(root, "password2", password2);
+    cJSON_AddStringToObject(root, "phoneId", phoneId);
+    cJSON_AddStringToObject(root, "password", password);
 
     // 将 JSON 对象转换为字符串
     char *json_str = cJSON_Print(root);
@@ -282,7 +275,7 @@ int init_calling_data(char *input)
     write_file("call.json", json_str, strlen(json_str));
     free(json_str);
 init_request:
-    ret = http_post("http://172.16.13.180:85/calling", 0, utf_buffer, response, sizeof(response));
+    ret = http_post(g_apconfig.talk_third, 0, utf_buffer, response, sizeof(response));
     UTF8ToGBK(response, strlen(response), response_gbk);
     if (NET_ERROR_NONE == ret)
     {
@@ -504,21 +497,25 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
     case 0x81:
     {
         char input[1024] = {0};
+        char url[256] = {0};
+        
         memcpy(input, param + 4, plen - 5);
         // 解析字符串 XX;XX
         char *token = strtok(input, ";");
         char *index = token;
         token = strtok(NULL, ";");
-        char *phoneId = token;
-        if (strncmp(index, '0', 1) == 0)
+        char *phoneId = token;        
+        if (strncmp(index, "0", 1) == 0)
         {
             trace_log("触发上工位语音对讲..");
-            add_http_get_task(0, g_apconfig.talk_back_dwn);
+            sprintf(url, "%s%s", g_apconfig.talk_back_up, phoneId);
+            add_http_get_task(0, url);
         }
-        else if (strncmp(index, '1', 1) == 0)
+        else if (strncmp(index, "1", 1) == 0)
         {
             trace_log("触发下工位语音对讲..");
-            add_http_get_task(0, g_apconfig.talk_back_up);
+            sprintf(url, "%s%s", g_apconfig.talk_back_dwn, phoneId);
+            add_http_get_task(0, url);
         }
     }
     break;

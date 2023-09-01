@@ -71,11 +71,9 @@ static const char *config_def =
 	"ui_type=1	# UI更新方式 0：UDP 1：http\r\n"
 	"ui_udp=192.168.1.132 # UDP更新界面方式，NUC地址\r\n"
 	"ui_url=http://192.168.1.111:9110/autorun #ui控制\r\n"
-	// "talk_back_up=http://192.168.1.111:9110/meeting/calling?ip=192.168.1.111&camera=0  # 上对讲\r\n"
-	// "talk_back_dwn=http://192.168.1.111:9110/meeting/calling?ip=192.168.1.111&camera=1  # 下对讲\r\n"
-	"talk_back_up=http://172.16.13.16:9110/calling?camera=0&type=520  # 上对讲\r\n"
-	"talk_back_dwn=http://172.16.13.16:9110/calling?camera=1&type=520  # 下对讲\r\n"
-	"talk_third=http://192.168.1.111:9110/calling?msg=answer";
+	"talk_back_up=http://172.16.13.16:9110/xjCalling?camera=0&phoneId=  # 上对讲\r\n"
+	"talk_back_dwn=http://172.16.13.16:9110/xjCalling?camera=1&phoneId=  # 下对讲\r\n"
+	"talk_third=http://172.16.13.16:9110/sipInit";
 
 
 SystemConfig g_apconfig = {0};
@@ -787,6 +785,7 @@ static void *local_server(void *arg)
 #define PIN_DOWN_HELP 0x02
 
 static int has_init = 0;
+static int first_calling = 1;
 static void io_cb(int di_last, int di_this)
 {
 	ltrace("io change:%#x - %#x \r\n", di_last, di_this);
@@ -794,12 +793,17 @@ static void io_cb(int di_last, int di_this)
 	IO_STAT_HEADER_INIT(header, 0, di_last, di_this);
 	Client_send(NULL, &header, NULL);
 	spm_gpio_change(di_last, di_this);
-	if( !(di_last & PIN_UP_HELP) && (di_this & PIN_UP_HELP) )
+	// if (first_calling == 1)
+	// {
+	// 	first_calling = 0;
+	// 	return;
+	// }
+	if (!(di_last & PIN_UP_HELP) && (di_this & PIN_UP_HELP))
 	{
 		ltrace("上工位求助，触发对讲.\r\n");
 		add_http_get_task(0, g_apconfig.talk_back_up);
 	}
-	if( !(di_last & PIN_DOWN_HELP) && (di_this & PIN_DOWN_HELP) )
+	if (!(di_last & PIN_DOWN_HELP) && (di_this & PIN_DOWN_HELP))
 	{
 		ltrace("下工位求助，触发对讲.\r\n");
 		add_http_get_task(0, g_apconfig.talk_back_dwn);

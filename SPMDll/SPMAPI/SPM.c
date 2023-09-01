@@ -427,7 +427,7 @@ EXPAPI BOOL CALLTYPE SPM_GetQrCode(HANDLE h, char *buf)
 	return TRUE;
 }
 
-EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phoneId1, char* password1, char* phoneId2, char* password2)
+EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phoneId, char* password)
 {
 	OBJECT_S *pSPM = (OBJECT_S *)h;
 	if (INVLAID_OBJ(pSPM))
@@ -439,7 +439,7 @@ EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phone
 	uint8_t *buf = recv_buf;
 	int len = 0;
 	DWORD ltSend = 0;
-	sprintf(text, "%s;%d;%s;%s;%s;%s", server, port, phoneId1, password1, phoneId2, password2);
+	sprintf(text, "%s;%d;%s;%s", server, port, phoneId, password);
 	strcpy(tmp + 4, text);
 	len += strlen(text) + 5;
 	len = create_package(0, 0x80, tmp, len, buffer, sizeof(buffer));
