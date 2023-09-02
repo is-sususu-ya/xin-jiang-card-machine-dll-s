@@ -1,7 +1,5 @@
 #!/bin/bash
-
-git pull
-  
+ 
 make clean
 make cc
 make CC=gcc APP=libSPM_x86.so

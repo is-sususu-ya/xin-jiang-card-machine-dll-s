@@ -48,6 +48,7 @@ typedef struct tagApConfig
 	char ui_udp[32];
 	int machine_type;
 	char ui_url[256];
+	char talk_ctrl[256];
 	char talk_back_up[256];
 	char talk_back_dwn[256];
 	char talk_third[256];

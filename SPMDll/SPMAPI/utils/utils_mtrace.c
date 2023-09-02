@@ -518,10 +518,12 @@ int mtrace_vlog(void *h, LPCTSTR fmt, va_list va)
 		if ( fmt[0] != '\t' )
 		{
 			rc = _ftprintf(hTrace->m_fp, _T("[%s] %s"), time_stamp(),  str);
+			printf(_T("[%s] %s"), time_stamp(),  str);
 		}
 		else
 		{
 			rc = _ftprintf(hTrace->m_fp, _T("%26s%s"), _T(" "), str+1 );
+			printf( _T("%26s%s"), _T(" "), str+1 );
 		}
 		if ( hTrace->m_bKeepOpen )
 			fflush( hTrace->m_fp );

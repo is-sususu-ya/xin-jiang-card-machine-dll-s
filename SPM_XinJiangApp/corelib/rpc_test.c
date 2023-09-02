@@ -91,16 +91,30 @@ static int string_to_list(const char *input, StrMap *list)
 	return 0;
 }
 
+extern void trace_log(const char *fmt, ...);
+
 static int rpc_qrcode_fake(const char *input, char *output)
 {
+	const char *phoneId = NULL;
 	StrMap maplist = PTRLIST_INITIALIZER;
 	string_to_list(input, &maplist);
-	strcpy(output, "success");
-	spm_answer_talk();
-	return 0;
+	phoneId = StrMap_safe_get(&maplist, "phoneId", "");
+	if (strcmp(phoneId,"") == 0)
+	{
+		trace_log("no phoneId parameter..");
+		strcpy(output, "no phoneId");
+		return 0;
+	}
+	else
+	{
+		trace_log("phoneId :%s", phoneId);
+		strcpy(output, "success");
+		spm_answer_talk(phoneId);
+		return 0;
+	}
 }
- 
+
 int test_interface()
 {
-	RPC_register_call("/calling", rpc_qrcode_fake); 
+	RPC_register_call("/calling", rpc_qrcode_fake);
 }

@@ -55,6 +55,7 @@ typedef struct tagObject
 	int nMsgNo;
 #endif
 	char qr_code[256];
+	char phoneId[256];
 	int connect_type;
 	int res_id;
 	int res_code;
@@ -464,7 +465,7 @@ EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeo
 	sprintf(text, "%d;%s", index == 0 ? 0 : 1, phoneId);
 	strcpy(tmp + 4, text);
 	len += strlen(text) + 5;
-	len = create_package(0, 0x81, tmp, 4, buffer, sizeof(buffer));
+	len = create_package(0, 0x81, tmp, len, buffer, sizeof(buffer));
 	SendPacket(pSPM, buffer, len);
 	return TRUE;
 }
@@ -478,10 +479,11 @@ EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int tim
 	uint8_t tmp[256] = {0};
 	char text[256] = {0};
 	int len = 0;
+	strcpy(phoneId, pSPM->phoneId);
 	sprintf(text, "%s;%d", phoneId, reply);
 	strcpy(tmp + 4, text);
-	len += strlen(text) + 5;
-	len = create_package(0, 0x82, tmp, 4, buffer, sizeof(buffer));
+	len = strlen(text) + 5;
+	len = create_package(0, 0x82, tmp, len, buffer, sizeof(buffer));
 	SendPacket(pSPM, buffer, len);
 	return TRUE;
 }
@@ -769,7 +771,6 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 			}
 			if (buf[0] == 0xa0 || buf[0] == 0xa1)
 			{
-				MTRACE_LOG(pSPM->hLog, "更新时间戳！\r\n");
 				this_stat = 1;
 				ltLastHeard = GetTickCount();
 				// 收到发来的数据帧，响应
@@ -793,7 +794,6 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 						MTRACE_LOG(pSPM->hLog, "收到IO变化帧[%d]!\r\n", pSPM->di_this);
 						NoticeEvent(pSPM, SPM_EVT_IOCHANGE);
 						break;
-
 					case 0x09:
 						MTRACE_LOG(pSPM->hLog, "收到Http响应码！\r\n");
 						pSPM->res_id = param[0];
@@ -814,11 +814,13 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 						}
 						MTRACE_LOG(pSPM->hLog, " last_stat 【%d】！！\r\n", last_stat);
 						break;
-					case 0x90:
-						MTRACE_LOG(pSPM->hLog, "收到NUC端的连线通知！\r\n");
+					case 0x85:
+						
+						strcpy(pSPM->phoneId, (char *)param + 4);
+						MTRACE_LOG(pSPM->hLog, "收到NUC端的连线通知,phoneId:%s！\r\n", pSPM->phoneId);
 						NoticeEvent(pSPM, SPM_EVT_CALL);
 						break;
-					case 0x91:
+					case 0x86:
 						MTRACE_LOG(pSPM->hLog, "对讲数据初始化成功通知！\r\n");
 						callInitSuccess = param[0] == 0 ? 1 : 2; // 0成功，其他失败
 						break;									 // 通知NUC端初始化成功
@@ -880,7 +882,7 @@ static int ReceivePacket(OBJECT_S *pSPM, uint8_t *msg, int size)
 			MTRACE_LOG(pSPM->hLog, "CRC解析错误！\r\n");
 			return -1;
 		}
-		MTRACE_LOG(pSPM->hLog, "帧解析正常， 帧长度 %d -> %s ！\r\n", total, show_hex(msg, total));
+		MTRACE_LOG(pSPM->hLog, "RX [%d] bytes -> %s ！\r\n", total, show_hex(msg, total));
 		return total;
 	}
 	else if (rc == '<')
@@ -929,6 +931,7 @@ static int SendPacket(OBJECT_S *pSPM, char *msg, int len)
 		if (pSPM->connect_type == TCP_TYPE && sock_iqueue(pSPM->fd) > 0)
 			sock_drain(pSPM->fd);
 		res = sock_write(pSPM->fd, msg, len);
+		MTRACE_LOG(pSPM->hLog, "TX [%d] bytes -> %s \r\n", len, show_hex(msg, len));
 	}
 	Mutex_Unlock(pSPM);
 	return res;

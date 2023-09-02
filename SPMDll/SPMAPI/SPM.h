@@ -15,11 +15,12 @@
 #endif
 
 
-#define SPM_EVT_ONLINE		1
-#define SPM_EVT_OFFLINE		2
-#define SPM_EVT_QRCODE		3
-#define SPM_EVT_IOCHANGE	4
+#define SPM_EVT_ONLINE			1
+#define SPM_EVT_OFFLINE			2
+#define SPM_EVT_QRCODE			3
+#define SPM_EVT_IOCHANGE		4
 #define SPM_EVT_HTTP_RESPONSE	5
+#define SPM_EVT_CALL			200
 
 #ifdef __cplusplus
 extern "C" {

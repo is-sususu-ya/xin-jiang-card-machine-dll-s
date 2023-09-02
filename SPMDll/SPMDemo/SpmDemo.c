@@ -36,6 +36,9 @@ typedef BOOL (*_SPM_Lcd_ChangeContext)(HANDLE h, int index, const char *text, in
 typedef BOOL (*_SPM_SyncTime)(HANDLE h);
 typedef BOOL (*_SPM_GetQrCode)(HANDLE h, char *buf);
 typedef BOOL (*_SPM_GpioOutPut)(HANDLE h, int pin, int val);
+typedef BOOL (*_SPM_AnswerPhone)(HANDLE h, char *phoneId, int reply, int timeout);
+typedef BOOL (*_SPM_CallPhone)(HANDLE h, int index, char *phoneId, int timeout);
+typedef BOOL (*_SPM_InitPhone)(HANDLE h, char *server, int port, char *phoneId, char *password);
 
 #define LoadFuction(name)                                              \
     _##name name = NULL;                                               \
@@ -75,7 +78,7 @@ int main(int argc, char const *argv[])
     const char *dev = "/dev/ttyUSB0";
     int bd = 9600;
     HANDLE lib = dlopen("./libSPM.so", RTLD_LAZY);
-    if(!lib)
+    if (!lib)
     {
         printf("load libSPM.so failed: %s \n", dlerror());
         return 0;
@@ -92,32 +95,44 @@ int main(int argc, char const *argv[])
     LoadFuction(SPM_Lcd_ChangeContext);
     LoadFuction(SPM_SyncTime);
     LoadFuction(SPM_GetQrCode);
-    LoadFuction(SPM_GpioOutPut);
-	
+    LoadFuction(SPM_AnswerPhone);
+    LoadFuction(SPM_CallPhone);
+    LoadFuction(SPM_InitPhone);
 
     if (argc >= 2)
-        dev = strdup(argv[1]);
-
+        dev = strdup(argv[1]); 
     hSPM = SPM_Create();
     if (SPM_Open(hSPM, dev))
     {
         printf("open device success!\n");
         SPM_SetCallBack(hSPM, onSPMEvent);
-        while (1)
+        int bQuit = 0;
+        int chr;
+        char phone[64] = {0};
+        while (!bQuit)
         {
-            printf("GPIO OUT\r\n");
-            if (has_code)
+            chr = getc(stdin);
+            switch (chr)
             {
-                has_code = 0;
-                SPM_GetQrCode(hSPM, QRcode);
-                printf("Code:%s\r\n", QRcode);
+            case 'q':
+                bQuit = 1;
+                break;
+            case '1':
+                SPM_InitPhone(hSPM, "192.168.1.123", 12312, "123456", "543211");
+                break;
+            case '2':
+                SPM_CallPhone(hSPM, 0, "12331", 23);
+                break;
+            case '3':
+                SPM_AnswerPhone(hSPM, phone, 1, 0);
+                break;
+            default:
+                break;
             }
-			SPM_GpioOutPut(hSPM, 0, 1 );
-            sleep(1);
-			SPM_GpioOutPut(hSPM, 0, 0 );
-            sleep(1);
         }
-    }else{
+    }
+    else
+    {
         printf("open device failed!\n");
     }
     return 0;

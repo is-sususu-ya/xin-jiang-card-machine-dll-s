@@ -26,17 +26,34 @@ extern void sim_loop();
 extern void sim_exit();
 
 static void *log_sys = NULL;
+static void *log_oper = NULL;
 
 void sys_log(const char *fmt, ...)
 {
 	va_list va;
 	int rc;
-	char str[512] = {0};
+	char str[4096] = {0};
 	if (log_sys == NULL)
 		return;
 	va_start(va, fmt);
 	rc = mtrace_vlog(log_sys, fmt, va);
+	vsprintf(str, fmt, va);
 	va_end(va);
+	printf(str);
+}
+
+void trace_log(const char *fmt, ...)
+{
+	va_list va;
+	int rc;
+	char str[4096] = {0};
+	if (log_oper == NULL)
+		return;
+	va_start(va, fmt);
+	rc = mtrace_vlog(log_oper, fmt, va);
+	vsprintf(str, fmt, va);
+	va_end(va);
+	printf(str);
 }
 
 static void write_default(const char *path, const char *buffer, int size)
@@ -48,7 +65,7 @@ static void write_default(const char *path, const char *buffer, int size)
 	close(fd);
 }
 
-extern int core_start( );
+extern int core_start();
 
 static int service_run()
 {
@@ -63,9 +80,9 @@ static void service_stop()
 static void print_help()
 {
 	printf("Build on %s - %s \r\n"
-			"-n enable http update ui\r\n" 
-			"-g [address] remote addr, if using udp is ip, if use http it is url\r\n",
-			__DATE__, __TIME__ );
+		   "-n enable http update ui\r\n"
+		   "-g [address] remote addr, if using udp is ip, if use http it is url\r\n",
+		   __DATE__, __TIME__);
 }
 
 int reset_interval = 0;
@@ -82,12 +99,12 @@ int main(int argc, char *const argv[])
 	bool b_killchild = false;
 	char name[128] = {0};
 	char input[128] = {0};
-    char log_name[128] = {0};
-	strcpy( input, argv[0] );
-	if( NULL == ( ptr = strrchr( argv[0], '/' ) ))
-		sprintf( name, "/var/tmp/.pid_%s.dat", argv[0] );
+	char log_name[128] = {0};
+	strcpy(input, argv[0]);
+	if (NULL == (ptr = strrchr(argv[0], '/')))
+		sprintf(name, "/var/tmp/.pid_%s.dat", argv[0]);
 	else
-		sprintf( name, "/var/tmp/.pid_%s.dat", ptr +1 );
+		sprintf(name, "/var/tmp/.pid_%s.dat", ptr + 1);
 	print_help();
 	while ((opt = getopt(argc, argv, ":dxnkrhmi:g:")) != -1)
 	{
@@ -97,7 +114,7 @@ int main(int argc, char *const argv[])
 			printf("missing required parameter for command option %c.\n", opt);
 			return -1;
 		case '?':
-			printf("%s -g ip gui port\n", argv[0] );
+			printf("%s -g ip gui port\n", argv[0]);
 			break;
 		case 'd':
 		case 'r':
@@ -107,8 +124,8 @@ int main(int argc, char *const argv[])
 			b_killchild = true;
 			break;
 		case 'g':
-			dst_ip = strdup( optarg );
-			printf("remote - %s \r\n", dst_ip );
+			dst_ip = strdup(optarg);
+			printf("remote - %s \r\n", dst_ip);
 			break;
 		case 'n':
 			g_en_http_ui = 1;
@@ -117,9 +134,9 @@ int main(int argc, char *const argv[])
 			g_enable_lcd_page_remap = 1;
 			break;
 		case 'i':
-			reset_interval = atoi( optarg );
-			reset_interval = reset_interval < 0 ? 60*60 : reset_interval;
-			printf("reset after:%d s\r\n", reset_interval );
+			reset_interval = atoi(optarg);
+			reset_interval = reset_interval < 0 ? 60 * 60 : reset_interval;
+			printf("reset after:%d s\r\n", reset_interval);
 		case 'x':
 			b_stop = true;
 			break;
@@ -127,13 +144,16 @@ int main(int argc, char *const argv[])
 			break;
 		}
 	}
-    strcpy(log_name, "/home/pay/log" );
+	strcpy(log_name, "/home/pay/log");
 	log_sys = mlog_init(log_name, "sys_run");
-	mlog_setlimitcnt(log_sys, 200, 2 );
+	mlog_setlimitcnt(log_sys, 200, 2);
 
-	sys_log("%sLCD屏页面重映射\r\n", g_enable_lcd_page_remap ? "开启" : "关闭" );
-	
-	daemon_config( argv[0], name, sys_log );
+	log_oper = mlog_init(log_name, "operation");
+	mlog_setlimitcnt(log_oper, 200, 2);
+
+	sys_log("lcd remap enable: %s\r\n", g_enable_lcd_page_remap ? "yes" : "no");
+
+	daemon_config(argv[0], name, sys_log);
 	daemon_service(service_run, service_stop);
 	if (b_stop)
 	{
