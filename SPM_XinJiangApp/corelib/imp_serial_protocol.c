@@ -968,6 +968,8 @@ void spm_answer_talk(const char *phoneId)
     SendUnLock();
 }
 
+
+
 void spm_call_init_success(int ret)
 {
     int len;
@@ -976,6 +978,23 @@ void spm_call_init_success(int ret)
     buf[0] = ret & 0xff;
     trace_log("上报对讲初始化结果..\r\n");
     len = create_package(0, 0x86, (uint8_t *)buf, 4, buffer, sizeof(buffer));
+    SendLock();
+    if (theApp.peer_fd > 0)
+        sock_write_n_bytes(theApp.peer_fd, buffer, len);
+    if (theApp.tty_fd > 0)
+        tty_write(theApp.tty_fd, buffer, len);
+    SendUnLock();
+}
+
+void spm_answer_status(const char *status)
+{
+    int len;
+    char buf[256] = {0};
+    char buffer[256] = {0};
+    int code = atoi(status);
+    buf[0] = code & 0xff;
+    trace_log("上报语音接入状态:[%s]\r\n", status );
+    len = create_package(0, 0x87, (uint8_t *)buf, 4, buffer, sizeof(buffer));
     SendLock();
     if (theApp.peer_fd > 0)
         sock_write_n_bytes(theApp.peer_fd, buffer, len);

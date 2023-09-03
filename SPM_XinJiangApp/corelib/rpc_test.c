@@ -99,22 +99,34 @@ static int rpc_qrcode_fake(const char *input, char *output)
 	StrMap maplist = PTRLIST_INITIALIZER;
 	string_to_list(input, &maplist);
 	phoneId = StrMap_safe_get(&maplist, "phoneId", "");
-	if (strcmp(phoneId,"") == 0)
+	if (strcmp(phoneId, "") == 0)
 	{
-		trace_log("no phoneId parameter..");
+		trace_log("no phoneId parameter..\r\n");
 		strcpy(output, "no phoneId");
 		return 0;
 	}
 	else
 	{
-		trace_log("phoneId :%s", phoneId);
+		trace_log("phoneId :%s\r\n", phoneId);
 		strcpy(output, "success");
 		spm_answer_talk(phoneId);
 		return 0;
 	}
 }
 
+static int rpc_qrcode_fake(const char *input, char *output)
+{
+	const char *status = NULL;
+	StrMap maplist = PTRLIST_INITIALIZER;
+	string_to_list(input, &maplist);
+	status = StrMap_safe_get(&maplist, "status", "");
+	trace_log("call status :%s\r\n", status);
+	strcpy(output, "success");
+	spm_answer_status(status);
+}
+
 int test_interface()
 {
 	RPC_register_call("/calling", rpc_qrcode_fake);
+	RPC_register_call("/callstatus", rpc_qrcode_fake);
 }

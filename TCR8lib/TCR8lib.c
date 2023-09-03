@@ -2124,26 +2124,26 @@ static void ProcessProtocolPacket(TCR8HANDLE h, const char *packet)
 				  int nSeat;
 				  DWORD nSN;
 				  int nCount, nCap;
-
+	  
 				  nChannel = packet[3] - '0';
-
+	  
 				  if( (nChannel < 1) || (nChannel > 4) )
 					  break;
-
+	  
 				  nSeat = packet[4] - '0';
-
+	  
 				  if( (nSeat < 1) || (nSeat > MAX_BOX_PERCHANNEL) )
 					  break;
-
+	  
 				  sscanf( packet+5, "%08d%03d%03d", &nSN, &nCap, &nCount );
-
+	  
 				  nChannel -= 1;
 				  nSeat -= 1;
-
+	  
 				  h->m_nChannelBoxInfo[ nChannel ].nSn[ nSeat ] = nSN;
 				  h->m_nChannelBoxInfo[ nChannel ].nCap[ nSeat ] = nCap;
 				  h->m_nChannelBoxInfo[ nChannel ].nCount[ nSeat ] = nCount;
-
+	  
 				  TRACE_LOG( h, "[Note] %d# channel %d cartridge sn: %d, cap: %d, count: %d\n", nChannel+1, nSeat+1, nSN, nCap, nCount );
 			  }*/
 		if (_IsCollector(h))
@@ -2280,7 +2280,7 @@ static inline int TCRGetChar(TCR8HANDLE h)
 #ifdef linux
 		chr = tty_getc(h->m_tty, 10, 0);
 #else
-		chr = tty_getc(h->m_tty, 10 );
+		chr = tty_getc(h->m_tty, 10);
 #endif
 	else
 		chr = sock_getc(h->m_sockTCP, 10);
@@ -2353,16 +2353,14 @@ static DWORD WINAPI ProtocolThread(LPVOID lpParameter)
 	int i, ch;
 	int nSkip = 0, szNextFrame = 0;
 	int rlen;
-	char buf[256], skipBuf[256], msg[512], NextFrame[256] = "";
+	char buf[512];
 	char *ptr;
 	char packet_index;
 	TCR8HANDLE h = (TCR8HANDLE)lpParameter;
 	fd_set rfd_set;
 	struct timeval tv;
-	int nsel;
-
-	TRACE_LOG(h, "||===============<< TCR8 Protocol Thread Start >>====================||\n");
-
+	int nsel; 
+	TRACE_LOG(h, "||===============<< TCR8 Protocol Thread Start >>====================||\n"); 
 	if (h->m_dwIP != INADDR_NONE)
 		winsock_startup();
 
@@ -2392,7 +2390,9 @@ static DWORD WINAPI ProtocolThread(LPVOID lpParameter)
 			{
 				TRACE_LOG(h, "[Error] sock_connect0 error code = %d", WSAGetLastError());
 				Sleep(2000);
+				continue;
 			}
+			TRACE_LOG(h, "[Error] sock_connect0 success \r\n");
 			h->m_tHeartBeat2Recv = GetSystemTime64();
 			ReportOnConnection(h, TRUE);
 			continue;
@@ -2424,6 +2424,7 @@ static DWORD WINAPI ProtocolThread(LPVOID lpParameter)
 			SendTimeSyncPacket(h);
 			h->m_tNextSync = time(NULL) + (86400 - time(NULL) % 86400); // Next time to sync the system clock is End Of Day
 		}
+		memset(buf, 0, sizeof(buf));
 		rlen = ReadFramePacket(h, buf);
 		if (rlen <= 0)
 			continue;
@@ -2844,7 +2845,7 @@ static void AckedPacket(TCR8HANDLE h, int nSeq)
 			h->_laneMsg[nSeq].msg_state = bWaitAck ? MST_WAITACK : MST_IDLE;
 			h->_laneMsg[nSeq].msg_naked = 0;
 
-			TCR8SendData(h, h->_laneMsg[nSeq].msg_body, h->_laneMsg[nSeq].msg_len );
+			TCR8SendData(h, h->_laneMsg[nSeq].msg_body, h->_laneMsg[nSeq].msg_len);
 
 			h->_laneMsg[nSeq].t_resend = GetSystemTime64() + MST_TIMEOUT; // Next second to resend if not acked
 			TriggerOnProtocolPacket(h, TRUE, h->_laneMsg[nSeq].msg_body);

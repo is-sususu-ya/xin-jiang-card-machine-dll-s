@@ -83,7 +83,11 @@ static int AckPacket(OBJECT_S *pSPM, int cmd);
 static int ReceivePacket(OBJECT_S *pSPM, uint8_t *msg, int size);
 static int SendPacket(OBJECT_S *pSPM, char *msg, int len);
 
-static int callInitSuccess = 0;
+static int nWaitType = 0;
+
+#define WAIT_FLAG_PHONE_INIT_SUCCESS 1
+#define WAIT_FLAG_PHONE_INIT_FAILED 2
+#define WAIT_FLAG_PHONE_CALL 3
 
 #ifdef linux
 static void *ProtocolThread(void *h);
@@ -446,11 +450,11 @@ EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char *server, int port, char *phone
 	len = create_package(0, 0x80, tmp, len, buffer, sizeof(buffer));
 	SendPacket(pSPM, buffer, len);
 	ltSend = GetTickCount() + 5000;
-	callInitSuccess = 0;
+	nWaitType = 0;
 	// 简单操作，等待5秒
-	while (ltSend > GetTickCount() && !callInitSuccess)
+	while (ltSend > GetTickCount() && nWaitType == 0)
 		usleep(100000);
-	return callInitSuccess == 1; // 1:成功 其他失败
+	return nWaitType == WAIT_FLAG_PHONE_INIT_SUCCESS; // 1:成功 其他失败
 }
 
 EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeout)
@@ -479,12 +483,16 @@ EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int tim
 	uint8_t tmp[256] = {0};
 	char text[256] = {0};
 	int len = 0;
+	DWORD ltSend = 0;
 	strcpy(phoneId, pSPM->phoneId);
 	sprintf(text, "%s;%d", phoneId, reply);
 	strcpy(tmp + 4, text);
 	len = strlen(text) + 5;
 	len = create_package(0, 0x82, tmp, len, buffer, sizeof(buffer));
 	SendPacket(pSPM, buffer, len);
+	ltSend = ltSend == 0 ? 5000 : ltSend;
+	ltSend = GetTickCount() + timeout < 1000 ? (timeout * 1000) : timeout;
+	// 不等了，不然收不到恢复，这里调用可能时回调处理的，所以不等了
 	return TRUE;
 }
 
@@ -815,15 +823,39 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 						MTRACE_LOG(pSPM->hLog, " last_stat 【%d】！！\r\n", last_stat);
 						break;
 					case 0x85:
-						
 						strcpy(pSPM->phoneId, (char *)param + 4);
 						MTRACE_LOG(pSPM->hLog, "收到NUC端的连线通知,phoneId:%s！\r\n", pSPM->phoneId);
 						NoticeEvent(pSPM, SPM_EVT_CALL);
 						break;
 					case 0x86:
 						MTRACE_LOG(pSPM->hLog, "对讲数据初始化成功通知！\r\n");
-						callInitSuccess = param[0] == 0 ? 1 : 2; // 0成功，其他失败
-						break;									 // 通知NUC端初始化成功
+						nWaitType = param[0] == 0 ? WAIT_FLAG_PHONE_INIT_SUCCESS : WAIT_FLAG_PHONE_INIT_FAILED; // 0成功，其他失败
+						break;
+					case 0x87:
+						MTRACE_LOG(pSPM->hLog, "通话状态:%d！\r\n", param[0]);
+						switch (param[0])
+						{
+						case SPM_EVT_CALL_ESTABLISHED:
+							NoticeEvent(pSPM, SPM_EVT_CALL_ESTABLISHED);
+							MTRACE_LOG(pSPM->hLog, "通话接入！\r\n");
+							break;
+						case SPM_EVT_CALL_HANGUP:
+							NoticeEvent(pSPM, SPM_EVT_CALL_HANGUP);
+							MTRACE_LOG(pSPM->hLog, "通话挂断！\r\n");
+							break;
+						case SPM_EVT_CALL_INTERCEPT:
+							NoticeEvent(pSPM, SPM_EVT_CALL_INTERCEPT);
+							MTRACE_LOG(pSPM->hLog, "通话中断！\r\n");
+							break;
+						case SPM_EVT_CALL_EXCEPTION:
+							NoticeEvent(pSPM, SPM_EVT_CALL_EXCEPTION);
+							MTRACE_LOG(pSPM->hLog, "通话异常！\r\n");
+							break;
+						default:
+							MTRACE_LOG(pSPM->hLog, "未定义的通话接入状态[%d].\r\n", param[0]);
+							break;
+						}
+						break; // 通知NUC端初始化成功
 					default:
 						MTRACE_LOG(pSPM->hLog, "未实现的内容【%d】！！\r\n", buf[4]);
 						break;

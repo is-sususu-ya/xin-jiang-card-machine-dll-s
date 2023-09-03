@@ -15,12 +15,17 @@
 #endif
 
 
-#define SPM_EVT_ONLINE			1
-#define SPM_EVT_OFFLINE			2
-#define SPM_EVT_QRCODE			3
-#define SPM_EVT_IOCHANGE		4
-#define SPM_EVT_HTTP_RESPONSE	5
-#define SPM_EVT_CALL			200
+#define SPM_EVT_ONLINE				1
+#define SPM_EVT_OFFLINE				2
+#define SPM_EVT_QRCODE				3
+#define SPM_EVT_IOCHANGE			4
+#define SPM_EVT_HTTP_RESPONSE		5
+
+#define SPM_EVT_CALL_RING			200		// 有呼入电话
+#define SPM_EVT_CALL_ESTABLISHED	100		// 接入电话
+#define SPM_EVT_CALL_HANGUP			101		// 挂断电话
+#define SPM_EVT_CALL_INTERCEPT		102		// 拦截电话
+#define SPM_EVT_CALL_EXCEPTION		103		// 中途异常
 
 #ifdef __cplusplus
 extern "C" {
