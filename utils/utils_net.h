@@ -74,6 +74,10 @@ extern int sock_skip_n_bytes(int fd, int n);
 
 extern int sock_is_connected( int fd );
 
+extern int sock_read_n_bytes_tout(int fd, void *buffer, int n, int tout);
+
+
+
 extern int sock_udp_open();
 extern int sock_udp_timeout( int sock, int nTimeOut );
 extern int sock_udp_bindhost(int port, const char *host);

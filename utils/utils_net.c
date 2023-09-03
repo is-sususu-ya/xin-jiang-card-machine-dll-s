@@ -23,9 +23,9 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/poll.h>
-#include <sys/socket.h>   
+#include <sys/socket.h>
 #include <linux/sockios.h>		// for sock_oqueue SIOCOUTQ
-#include <sys/ioctl.h>   
+#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <ifaddrs.h>
 //#include <net/if.h>
@@ -94,7 +94,7 @@ int sock_connect0( unsigned long ul_addr, int port )
 	destaddr.sin_family = AF_INET;
 	destaddr.sin_port = htons( (short)port );
 	destaddr.sin_addr.s_addr = ul_addr;
-	
+
 	fd = socket(PF_INET, SOCK_STREAM, 0);
 	if (fd < 0)   return -1;
 
@@ -112,7 +112,7 @@ int sock_listen( int port, const char *ipbind, int backlog )
 	int 			fd, tmp = 1;
 
 	fd = socket(AF_INET,SOCK_STREAM,0);
-	if (fd < 0) 
+	if (fd < 0)
   	 return -1;
 
  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &tmp, sizeof(tmp));
@@ -153,14 +153,14 @@ const char* sock_getpeername( int fd, int *port )
 {
 	struct sockaddr_in	peer_addr;
 	socklen_t		addrlen = sizeof(peer_addr);
-	
+
 	if ( getpeername( fd,  (struct sockaddr *) &peer_addr, &addrlen ) == 0 )
 	{
 		if ( port ) *port = ntohs( peer_addr.sin_port );
 		return inet_ntoa( peer_addr.sin_addr );
 	}
 	else
-		return "";			
+		return "";
 }
 
 int sock_getpeeraddr(int fd, struct sockaddr *saddr)
@@ -168,7 +168,7 @@ int sock_getpeeraddr(int fd, struct sockaddr *saddr)
 	SOCKADDR_STORAGE	ss;
 	socklen_t		addrlen = sizeof(ss);
 	int rc = -1;
-	
+
 	if ( getpeername( fd,  (struct sockaddr *) &ss, &addrlen ) == 0 )
 	{
 		memcpy(saddr, &ss, addrlen);
@@ -181,7 +181,7 @@ const char *sockaddr_in_tostring(SOCKADDR_IN *addr, int withport)
 {
 	static char straddr[INET_ADDRSTRLEN+6];
 	unsigned short port;
-	
+
 	struct in_addr inaddr;
 	inaddr.s_addr = addr->sin_addr.s_addr;
 	port = addr->sin_port;
@@ -250,7 +250,7 @@ int sock_write( int fd, const void* buffer, int buf_size )
 #ifdef NET_TIMEDOUT_ENABLE
 	if( 0 != sock_wait_for_io_or_timeout(fd, 0, NET_TIMEDOUT_MSEC) ) return -1;
 #endif
-	
+
 	return send(fd, buffer, buf_size, MSG_NOSIGNAL);
 }
 
@@ -266,7 +266,7 @@ int sock_drain_until( int fd, unsigned char *soh, int ns )
 			return -1;
 
 		/* try to locate soh sequence in buffer */
-		for(i=0, ptr=buffer; i<=len-ns; i++, ptr++) 
+		for(i=0, ptr=buffer; i<=len-ns; i++, ptr++)
 			if ( 0==memcmp( ptr, soh, ns) )
 				break;
 		nskip += ptr - buffer;
@@ -282,7 +282,7 @@ int sock_drain_until( int fd, unsigned char *soh, int ns )
 
 int sock_getc( int sock, int tout )
 {
-	int		rc;
+	int		rc = 0;
 	unsigned char	ch = 0;
 
     if ( (rc = sock_dataready( sock, tout )) > 0 )
@@ -299,7 +299,7 @@ int sock_read_until(int fd, char* buffer, int buf_size, int eol)
 	int len, size, buf_left, i, found=0;
 	char *ptr, *cmpptr;
 
-	for (ptr=buffer,size=0,buf_left=buf_size-1; buf_left>0; /**/) 
+	for (ptr=buffer,size=0,buf_left=buf_size-1; buf_left>0; /**/)
 	{
 #ifdef NET_TIMEDOUT_ENABLE
 		if( 0 != sock_wait_for_io_or_timeout(fd, 1, NET_TIMEDOUT_MSEC) ) return -1;
@@ -312,9 +312,9 @@ int sock_read_until(int fd, char* buffer, int buf_size, int eol)
 			continue;
 
 		/* try finding 'eol' in the data */
-		for(i=0, cmpptr=ptr; i<len; i++, cmpptr++) 
+		for(i=0, cmpptr=ptr; i<len; i++, cmpptr++)
 		{
-			if(*cmpptr == eol) 
+			if(*cmpptr == eol)
 			{
 				len = i+1;
 				found = 1;
@@ -347,7 +347,7 @@ int sock_peek_until(int fd, char* buffer, int buf_size, int eol)
 	int len, size, buf_left, i, found=0;
 	char *ptr, *cmpptr;
 
-	for (ptr=buffer,size=0,buf_left=buf_size-1; buf_left>0; /**/) 
+	for (ptr=buffer,size=0,buf_left=buf_size-1; buf_left>0; /**/)
 	{
 		/* peek the data, but not remove the data from the queue */
 		len = recv(fd, ptr, buf_left, MSG_PEEK);
@@ -357,7 +357,7 @@ int sock_peek_until(int fd, char* buffer, int buf_size, int eol)
 			continue;
 
 		/* try finding 'eol' in the data */
-		for(i=0, cmpptr=ptr; i<len; i++, cmpptr++) 
+		for(i=0, cmpptr=ptr; i<len; i++, cmpptr++)
 		{
 			if(*cmpptr == eol) {
 				len = i+1;
@@ -406,7 +406,7 @@ int sock_write_n_bytes(int fd, void* buffer, int size)
 {
 	int len;
 	char *ptr = (char *)buffer;
-	
+
 	while ( size > 0 )
 	{
 		len = send(fd, ptr, min(size,1024), MSG_NOSIGNAL);
@@ -491,7 +491,7 @@ int sock_is_connected( int fd )
 //================================ U D P ===========================
 int sock_udp_open()
 {
-	return socket(AF_INET,SOCK_DGRAM,0);		
+	return socket(AF_INET,SOCK_DGRAM,0);
 }
 
 int sock_udp_timeout( int sock, int nTimeOut )
@@ -525,14 +525,14 @@ int sock_udp_bindhost(int port,const char *host)
     	udp_fd = -EIO;
   	}
 	}
-  return udp_fd;	
+  return udp_fd;
 }
 
 int sock_udp_broadcast( int fd, int enable )
 {
 	return setsockopt( fd, SOL_SOCKET, SO_BROADCAST, &enable, sizeof(enable) );
 }
-	
+
 int sock_udp_send( const char *ip, int port, const void* msg, int len )
 {
 	SOCKADDR_IN	udp_addr;
@@ -568,7 +568,7 @@ int sock_udp_send0( int fd, SOCKADDR_IN *paddr, int port, const void* msg, int l
 		paddr = &udp_addr;
 		memset( & udp_addr, 0, sizeof(udp_addr) );
 		udp_addr.sin_family = AF_INET;
-		udp_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);		
+		udp_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 		udp_addr.sin_port = htons( (short)port );
 	}
 
@@ -636,7 +636,7 @@ int sock_iqueue(int fd)
 	if ( ioctl( fd, FIONREAD, &ul ) == 0 )
 		return (int)ul;
 	return 0;
-	
+
 }
 
 int sock_oqueue(int fd)
@@ -739,7 +739,7 @@ const char *get_ifadapter_name()
 				break;
 			}
 			ifaddr = ifaddr->ifa_next;
-		}	
+		}
 		freeifaddrs( ifaddr_head );
 	}
 	return if_name;
@@ -760,14 +760,14 @@ int get_netmask( const char *ifname, SOCKADDR_IN *netmask )
   {
   	memcpy(netmask, &ifr.ifr_ifru.ifru_netmask, sizeof(struct sockaddr_in) );
   }
-  return rc;	
+  return rc;
 }
 
 int set_netmask( const char *ifname, SOCKADDR_IN *netmask )
 {
 	int rc, fd;
   struct ifreq ifr;
-  struct sockaddr_in netmask_addr; 
+  struct sockaddr_in netmask_addr;
   if((fd = socket(AF_INET,SOCK_DGRAM, 0)) < 0)
 		return -1;
   bzero((char *)&ifr, sizeof(ifr));
@@ -778,14 +778,14 @@ int set_netmask( const char *ifname, SOCKADDR_IN *netmask )
   memcpy((char*)&ifr.ifr_ifru.ifru_netmask, (char*)&netmask_addr, sizeof(struct sockaddr_in));
   rc = ioctl(fd,SIOCSIFNETMASK,&ifr);
   close(fd);
-  return rc;	
+  return rc;
 }
 
 int get_netaddr( const char *ifname, SOCKADDR_IN *netaddr )
 {
 	int rc, fd;
   struct ifreq ifr;
-	
+
   if((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
   	return -1;
   bzero((char *)&ifr, sizeof(ifr));
@@ -804,7 +804,7 @@ int set_netaddr( const char *ifname, SOCKADDR_IN *netaddr )
 	int rc, fd;
   struct ifreq ifr;
   struct sockaddr_in addr;
-	
+
   if((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
   	return -1;
   bzero((char *)&ifr, sizeof(ifr));
@@ -827,7 +827,7 @@ int get_mac_addr( const char *ifname, unsigned char *ifaddr )
 		strcpy( ifr.ifr_name, get_ifadapter_name() );
 	else
 		strcpy( ifr.ifr_name, ifname );
-		
+
 	if( (skfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0 )
 	{
 		//printf("get_mac_addr - if_name = %s\n", ifr.ifr_name );
@@ -835,7 +835,7 @@ int get_mac_addr( const char *ifname, unsigned char *ifaddr )
 		{
 			memcpy(ifaddr, ifr.ifr_hwaddr.sa_data, 6);
   		rc = 0;
-		} 
+		}
 		close( skfd );
 	}
 	return rc;
@@ -850,7 +850,7 @@ int set_mac_addr( const char *ifname, unsigned char *ifaddr )
 		strcpy( ifr.ifr_name, get_ifadapter_name() );
 	else
 		strcpy( ifr.ifr_name, ifname );
-		
+
 	if( (skfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0 )
 	{
 		//printf("set_mac_addr - if_name = %s\n", ifr.ifr_name );
@@ -866,7 +866,7 @@ int set_mac_addr( const char *ifname, unsigned char *ifaddr )
 const char *mac2string(unsigned char *hwaddr)
 {
 	static char macaddr[20];
-	sprintf(macaddr,"%02x:%02x:%02x:%02x:%02x:%02x", 
+	sprintf(macaddr,"%02x:%02x:%02x:%02x:%02x:%02x",
 		hwaddr[0],hwaddr[1],hwaddr[2],hwaddr[3],hwaddr[4],hwaddr[5]);
 	return macaddr;
 }
@@ -878,19 +878,19 @@ unsigned long get_gatewayaddr( const char *ifname, char *buf )
 	char line[128];
 	unsigned long gw_addr=INADDR_NONE, dest_addr, gate_addr;
 	struct in_addr inaddr;
-	
+
 	fp = fopen("/proc/net/route", "r");
 	if (fp == NULL)
 		return gw_addr;
 	if ( ifname==NULL )
 		ifname = get_ifadapter_name();
-		
+
   /* skip title line */
   fgets(line, sizeof(line),fp);
   while (fgets(line, sizeof(line), fp))
   {
   	if ( strlen(line)<10 ) continue;
-		if (sscanf(line, "%s\t%lX\t%lX", iface,&dest_addr,&gate_addr) != 3 || 
+		if (sscanf(line, "%s\t%lX\t%lX", iface,&dest_addr,&gate_addr) != 3 ||
 					dest_addr != 0 ||
 					(ifname!=NULL && strcmp(iface, ifname)!=0) )
 				continue;
@@ -911,7 +911,7 @@ int add_default_gateway(const char *ifname, SOCKADDR_IN *gwaddr )
 	int fd, rc;
 	struct rtentry rm;
 	SOCKADDR_IN sin;
-	
+
 	 	if((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
   		return -1;
 		if ( ifname==NULL )	ifname = get_ifadapter_name();
@@ -934,7 +934,7 @@ int del_default_gateway(const char *ifname, SOCKADDR_IN *gwaddr)
 {
 	int fd, rc;
   struct rtentry rm;
-    
+
 	 	if((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
   		return -1;
 		if ( ifname==NULL )	ifname = get_ifadapter_name();
@@ -1058,5 +1058,31 @@ const char *SOCKADDR_IN_TOSTRING(SOCKADDR_IN addr)
 {
 	return sockaddr_in_tostring(&addr,1);
 }
+
+
+ int sock_read_n_bytes_tout(int fd, void *buffer, int n, int tout)
+ {
+     char *ptr = buffer;
+     int len;
+     while (n > 0)
+     {
+         if (0 != sock_wait_for_io_or_timeout(fd, 1, tout))
+             return (ptr - (char *)buffer);
+
+         len = recv(fd, ptr, n, MSG_NOSIGNAL);
+         if (len == 0)
+             break;
+         if (len < 0)
+         {
+             if (errno == EAGAIN || errno == EINTR)
+                 continue;
+             else // 其他错误，一般是EPIPE (socket关闭)
+                 return -1;
+         }
+         ptr += len;
+         n -= len;
+     }
+     return (ptr - (char *)buffer);
+ }
 
 #endif

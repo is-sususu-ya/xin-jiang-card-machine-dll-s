@@ -15,16 +15,16 @@ typedef int BOOL;
 typedef int	DWORD;
 typedef const char*  LPCTSTR;
 typedef void * HANDLE;
- 
-typedef void   (*ACMEventHandle)(int a, int b); 
+
+typedef void   (*ACMEventHandle)(int a, int b);
 typedef  BOOL  (*_ACM_SetEventCallBackFunc)(ACMEventHandle cb);
 typedef  BOOL  (*_ACM_OpenDevice)(const char *devName, int nBaudRate);
-typedef  BOOL  (*_ACM_CloseDevice)(void); 
+typedef  BOOL  (*_ACM_CloseDevice)(void);
 typedef  BOOL  (*_ACM_Reject)(void);
 typedef BOOL   (*_ACM_IssueCard)(void);
-typedef  BOOL  (*_ACM_RecycleCard)(void); 
+typedef  BOOL  (*_ACM_RecycleCard)(void);
 typedef  BOOL  (*_ACM_SwitchAntenna)(int nPosition);
-typedef  BOOL  (*_ACM_IsOnline)(void); 
+typedef  BOOL  (*_ACM_IsOnline)(void);
 typedef  BOOL  (*_ACM_ForceEject)(int nChannel);
 typedef  BOOL  (*_ACM_ForceRecycle)(int nChannel);
 typedef  BOOL  (*_ACM_GetFirmwareVer)(DWORD *ver);
@@ -33,7 +33,7 @@ typedef  BOOL  (*_ACM_GetBoxSN)(int nChannel, DWORD *dwSN);
 typedef  BOOL  (*_ACM_SetCardCounter)(int nChannel, int nCount);
 typedef  BOOL  (*_ACM_GetCardCounter)(int nChannel, int *nCount);
 typedef  BOOL  (*_ACM_GetChannelState)(int nChannel, int *nState);
-typedef  BOOL  (*_ACM_IsBoxLoad)(int nChannel);    
+typedef  BOOL  (*_ACM_IsBoxLoad)(int nChannel);
 typedef int	  (*_ACM_GetTxData)(char *buf, int size);
 typedef int	  (*_ACM_GetRxData)(char *buf, int size);
 typedef int   (*_ACM_GetKernelLog)(char *buf, int size);
@@ -53,41 +53,36 @@ static void onACMEvet(int code, int param )
         case 1: printf("核心板复位上电\r\n"); break;
     }
 }
- 
+
 int main(int argc, char const *argv[])
 {
     /* 加载并解析所有接口 */
     char buf[32];
     HANDLE hCM = NULL;
-    HANDLE lib = dlopen("./libTCR8ACM.so", RTLD_LAZY );
-     if( !lib ) 
-    {
-        printf("加载动态库失败：%s！\r\n", dlerror());
-        return 0;
-    }
+    HANDLE lib = dlopen("./libTCR8ACM_x86.so", RTLD_LAZY );
     LoadFuction(ACM_OpenDevice);
     LoadFuction(ACM_SetEventCallBackFunc);
-    LoadFuction(ACM_CloseDevice); 
+    LoadFuction(ACM_CloseDevice);
     LoadFuction(ACM_Reject);
     LoadFuction(ACM_IssueCard);
-    LoadFuction(ACM_RecycleCard); 
+    LoadFuction(ACM_RecycleCard);
     LoadFuction(ACM_SwitchAntenna);
-    LoadFuction(ACM_IsOnline); 
+    LoadFuction(ACM_IsOnline);
     LoadFuction(ACM_ForceEject);
     LoadFuction(ACM_ForceRecycle);
     LoadFuction(ACM_GetFirmwareVer);
     LoadFuction(ACM_SetBoxSN);
     LoadFuction(ACM_GetBoxSN);
     LoadFuction(ACM_SetCardCounter);
-    LoadFuction(ACM_GetCardCounter); 
+    LoadFuction(ACM_GetCardCounter);
     LoadFuction(ACM_GetChannelState);
-    LoadFuction(ACM_IsBoxLoad);     
+    LoadFuction(ACM_IsBoxLoad);
     LoadFuction(ACM_GetTxData);
     LoadFuction(ACM_GetRxData);
-    LoadFuction(ACM_GetKernelLog); 
+    LoadFuction(ACM_GetKernelLog);
 
     /** 尝试打开设备 **/
-	const char *dev = "/dev/ttyAMA2";
+	const char *dev = "192.168.124.8";
 	int bd = 9600;
 	if( argc >= 2 )
 		dev = strdup( argv[1] );
@@ -101,7 +96,7 @@ int main(int argc, char const *argv[])
     }
     //  设置消息处理函数
     ACM_SetEventCallBackFunc(onACMEvet);
-    // 
+    //
     while( 1 )
     {
         //* 接口调用示例
@@ -113,7 +108,7 @@ int main(int argc, char const *argv[])
             ACM_IssueCard();
             break;
             case '2':
-            printf("回收工作通道天线位置的卡"); 
+            printf("回收工作通道天线位置的卡");
             ACM_RecycleCard();
             break;
             case '3':
