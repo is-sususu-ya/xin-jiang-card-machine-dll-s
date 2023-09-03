@@ -825,7 +825,7 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 					case 0x85:
 						strcpy(pSPM->phoneId, (char *)param + 4);
 						MTRACE_LOG(pSPM->hLog, "收到NUC端的连线通知,phoneId:%s！\r\n", pSPM->phoneId);
-						NoticeEvent(pSPM, SPM_EVT_CALL);
+						NoticeEvent(pSPM, SPM_EVT_CALL_RING);
 						break;
 					case 0x86:
 						MTRACE_LOG(pSPM->hLog, "对讲数据初始化成功通知！\r\n");
