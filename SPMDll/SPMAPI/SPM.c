@@ -767,6 +767,7 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 			MTRACE_LOG(pSPM->hLog, "长时间没收到信息，认定设备离线！\r\n");
 			CloseSocket(pSPM);
 			this_stat = 0;
+			continue;
 		}
 		if (spm_ready(pSPM))
 		{
