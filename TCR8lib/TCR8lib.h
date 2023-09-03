@@ -159,6 +159,14 @@ typedef struct tagTCR8Struct
 #define EVM_PULLBACKOK		0x00200000
 #define EVID_PULLBACKFAIL	23				// Pull back card from exit FAIL(param: channel)
 #define EVM_PULLBACKFAIL	0x00400000 
+
+// 废票回收
+#define EVID_PAPERRECYCLE	24
+#define EVM_PAPERRECYCLE	0x00800000 
+
+#define EVID_FLIP_MOTOR_CHANGE	25				// Flip motor change (param: channel)
+#define EVM_FLIP_MOTOR_CHANGE	0x01000000 
+
 #define EVID_THREADEXIT		29				// workthread exir abnormally
 #define EVM_THREADEXIT		0x10000000
 #define EVID_TX				30				// protocol packet send to TCR8 machine
@@ -216,15 +224,22 @@ extern "C" {
 
 // initial/uninitial
 DLLAPI TCR8HANDLE CALLTYPE  TCR8_Create();
-DLLAPI void CALLTYPE TCR8_Destroy(TCR8HANDLE h);
-#ifdef linux
-DLLAPI BOOL CALLTYPE TCR8_SetComPort( TCR8HANDLE h, const char *dev_name, int nBaudrate );
-#else    
-DLLAPI BOOL CALLTYPE TCR8_SetComPort( TCR8HANDLE h, int nPort, int nBaudrate );
-#endif    
+DLLAPI void CALLTYPE TCR8_Destroy(TCR8HANDLE h); 
+/*
+	dev_name support 
+		Windows:
+			COM1 | 192.168.1.123
+		Linux:
+			/dev/ttyAMA3 | 192.168.1.123 
+*/  
+DLLAPI BOOL CALLTYPE TCR8_SetComPort(TCR8HANDLE h, const char *dev_name, int nBaudrate);
+ 
 DLLAPI BOOL CALLTYPE TCR8_SetCallback( TCR8HANDLE h, void (*)( void *, int, int) ); 
+/* OpenDevice as serial mode */
 DLLAPI BOOL CALLTYPE TCR8_OpenDevice(TCR8HANDLE h);
+/* OpenDevice as net mode */
 DLLAPI BOOL CALLTYPE TCR8_OpenDeviceNet(TCR8HANDLE h, const char *chIP);
+
 DLLAPI BOOL CALLTYPE TCR8_CloseDevice(TCR8HANDLE h);
 DLLAPI BOOL CALLTYPE TCR8_Run(TCR8HANDLE h);
 DLLAPI BOOL CALLTYPE TCR8_Suspend(TCR8HANDLE h); 
@@ -239,7 +254,26 @@ DLLAPI BOOL CALLTYPE TCR8_ReturnCard( TCR8HANDLE h, int nChannel );
 DLLAPI BOOL CALLTYPE TCR8_CollectCard( TCR8HANDLE h, int nChannel );
 DLLAPI BOOL CALLTYPE TCR8_TriggerButton( TCR8HANDLE h, int nChannel );
 DLLAPI BOOL CALLTYPE TCR8_PullBackToAnt( TCR8HANDLE h, int nChannel ); 
-DLLAPI BOOL CALLTYPE TCR8_SetCartridgeInfo( TCR8HANDLE h, int nChannel, DWORD dwSN, int nCount );
+/**
+ * @brief  面板控制，下工位
+ * 
+ * @param h 
+ * @param ops 
+ * @return * BOOL 
+ */
+BOOL TCR8_PushPanel(TCR8HANDLE h, int ops );
+/**
+ * @brief 带工位的面板控制，gw： 1: 上工位，2 下工位
+ * 
+ * @param h 
+ * @param gw 工位信息
+ * @param ops  伸出或缩回
+ * @return BOOL 
+ */
+BOOL TCR8_PushPanelEx(TCR8HANDLE h, int gw, int ops );
+
+BOOL TCR8_QueryPaperRecycle(TCR8HANDLE h, int gw);
+DLLAPI BOOL CALLTYPE TCR8_SetCartridgeInfo( TCR8HANDLE h, int nChannel, DWORD dwSN, int nCount ); 
 DLLAPI BOOL CALLTYPE TCR8_EnableLog( TCR8HANDLE h, LPCTSTR strPath );		// if strPath is NULL means disable.
 DLLAPI BOOL CALLTYPE TCR8_EnableKernelLog( TCR8HANDLE h, BOOL bEnable );
 DLLAPI BOOL CALLTYPE TCR8_Log(TCR8HANDLE h, LPCTSTR fmt,...);
