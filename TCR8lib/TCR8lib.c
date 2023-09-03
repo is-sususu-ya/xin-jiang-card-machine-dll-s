@@ -2800,7 +2800,6 @@ static int SendNak(TCR8HANDLE h, char cseq)
 static void AckedPacket(TCR8HANDLE h, int nSeq)
 {
 	int i;
-	int i;
 
 	if (!_IsValidHandle(h))
 		return;

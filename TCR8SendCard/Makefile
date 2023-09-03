@@ -6,15 +6,15 @@ CFLAGS:=-g -I. -DENABLE_TESTCODE -I. -I../utils -fPIC
 AIM=libTCR8ACM$(TAIL).so
 SRC=$(wildcard ./*.c)
 SRC+=../utils/utils_net.c ../utils/utils_tty.c ../TCR8lib/TCR8lib.c ../utils/longtime.c
-OBJ=$(SRC:%.c=%.o) 
- 
+OBJ=$(SRC:%.c=%.o)
+
 all : $(AIM)
 $(AIM) : $(OBJ)
-	$(CC) -shared -o $@ $^ $(LFLAGS)
-	
+	$(CC) -shared -o $@ $^ $(LFLAGS) -Wl,--retain-symbols-file=api.sym -Wl,--version-script=api.map
+
 $(OBJ) : %.o:%.c
 	$(CC) $(CFLAGS) -c $^ -o $@
-			
+
 .PHONY : clean
 cc:
 	rm -f $(OBJ)
