@@ -93,7 +93,7 @@ static int string_to_list(const char *input, StrMap *list)
 
 extern void trace_log(const char *fmt, ...);
 
-static int rpc_qrcode_fake(const char *input, char *output)
+static int rpc_calling_fake(const char *input, char *output)
 {
 	const char *phoneId = NULL;
 	StrMap maplist = PTRLIST_INITIALIZER;
@@ -114,7 +114,7 @@ static int rpc_qrcode_fake(const char *input, char *output)
 	}
 }
 
-static int rpc_qrcode_fake(const char *input, char *output)
+static int rpc_status_fake(const char *input, char *output)
 {
 	const char *status = NULL;
 	StrMap maplist = PTRLIST_INITIALIZER;
@@ -127,6 +127,6 @@ static int rpc_qrcode_fake(const char *input, char *output)
 
 int test_interface()
 {
-	RPC_register_call("/calling", rpc_qrcode_fake);
-	RPC_register_call("/callstatus", rpc_qrcode_fake);
+	RPC_register_call("/calling", rpc_calling_fake);
+	RPC_register_call("/callstatus", rpc_status_fake);
 }
