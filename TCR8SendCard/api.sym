@@ -26,3 +26,4 @@ ACM_GetTxData
 ACM_GetRxData
 ACM_GetKernelLog
 ACM_PlayAudio
+ACC_PushPanelCtrl

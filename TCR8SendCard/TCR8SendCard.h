@@ -56,6 +56,14 @@ extern "C" {
 	DLLAPI BOOL CALLTYPE ACM_TriggerButton(int nChannel);
 	DLLAPI BOOL CALLTYPE ACM_PullBackToAnt(int nChannel);
 
+	/**
+	 * @brief 面板控制指令
+	 * 
+	 * @param deck  工位 1： 上工位 2： 下工位
+	 * @param ctrl   伸缩控制： 1： 伸出    0： 缩回
+	 * @return DLLAPI 
+	 */
+	DLLAPI int	CALLTYPE ACM_PushPanelCtrl(int deck, int ctrl );
 
 #ifdef __cplusplus
 }

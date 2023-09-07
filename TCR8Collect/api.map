@@ -22,5 +22,6 @@ global:
     ACC_GetTxData;
     ACC_GetRxData;
     ACC_GetKernelLog;
+    ACC_PushPanelCtrl;
 local: *;
 };

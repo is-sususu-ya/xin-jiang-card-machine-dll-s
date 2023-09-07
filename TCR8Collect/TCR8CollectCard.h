@@ -44,6 +44,16 @@ extern "C" {
 	DLLAPI BOOL CALLTYPE ACC_IsBoxLoad(int nChannel);     
 	DLLAPI int	CALLTYPE ACC_GetTxData(char *buf, int size);
 	DLLAPI int	CALLTYPE ACC_GetRxData(char *buf, int size);
+
+	/**
+	 * @brief 面板控制指令
+	 * 
+	 * @param deck  工位 1： 上工位 2： 下工位
+	 * @param ctrl   伸缩控制： 1： 伸出    0： 缩回
+	 * @return DLLAPI 
+	 */
+	DLLAPI int	CALLTYPE ACC_PushPanelCtrl(int deck, int ctrl );
+
 	DLLAPI int CALLTYPE ACC_GetKernelLog(char *buf, int size);
 
 #ifdef __cplusplus

@@ -28,5 +28,6 @@ global:
     ACM_GetRxData;
     ACM_GetKernelLog;
     ACM_PlayAudio;
+    ACM_PushPanelCtrl;
 local: *;
 };
