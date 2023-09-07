@@ -303,8 +303,8 @@ DLLAPI int CALLTYPE ACC_GetKernelLog(char *buf, int size)
 }
 
 DLLAPI int	CALLTYPE ACC_PushPanelCtrl(int deck, int ctrl )
-{
-	TCR8_Log(m_hTCR8, "【上位机调用】 ACC_PushPanelCtrl(%d)\n", nChannel);
+{ 
+	TCR8_Log(m_hTCR8, "【上位机调用】 ACC_PushPanelCtrl(%d-%d)\n", deck, ctrl);
 
 	return TCR8_PushPanelEx(m_hTCR8, deck, ctrl);
 }

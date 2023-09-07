@@ -421,7 +421,7 @@ BOOL CALLTYPE ACM_PullBackToAnt(int nChannel)
 
 DLLAPI int	CALLTYPE ACM_PushPanelCtrl(int deck, int ctrl )
 {
-	TCR8_Log(m_hTCR8, "【上位机调用】 ACM_PushPanelCtrl(%d)\n", nChannel);
+	TCR8_Log(m_hTCR8, "【上位机调用】 ACM_PushPanelCtrl(%d-%d)\n", deck, ctrl);
 
 	return TCR8_PushPanelEx(m_hTCR8, deck, ctrl);
 }
