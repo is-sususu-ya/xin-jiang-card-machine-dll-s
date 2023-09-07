@@ -71,7 +71,7 @@ static const char *config_def =
 	"ui_type=1	# UI更新方式 0：UDP 1：http\r\n"
 	"ui_udp=192.168.1.132 # UDP更新界面方式，NUC地址\r\n"
 	"ui_url=http://192.168.1.111:9110/autorun #ui控制\r\n"
-	"talk_ctrl=http://172.16.13.16:9110/calling     # 接听控制接口 \r\n"
+	"talk_ctrl=http://172.16.13.16:9110/getAllows     # 接听控制接口 \r\n"
 	"talk_back_up=http://172.16.13.16:9110/xjCalling?camera=0&phoneId=1001  # 上对讲\r\n"
 	"talk_back_dwn=http://172.16.13.16:9110/xjCalling?camera=1&phoneId=1002  # 下对讲\r\n"
 	"talk_third=http://172.16.13.16:9110/sipInit";

@@ -552,9 +552,10 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         }
     }
     break;
-    case 0x82:
+    case 0x82:        
         trace_log("接听控制.");
-        sscanf((char *)param, "%[^;];%d", phoneId, &code);
+        memcpy(input, param + 4, plen - 5);
+        sscanf((char *)input, "%[^;];%d", phoneId, &code);
         trace_log("phoneId:[%s] code:[%d]\r\n", phoneId, code);
         // 如果是默认接听的话，就无所谓了
         if (code == 100)
