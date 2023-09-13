@@ -174,7 +174,7 @@ DLLAPI void CALLTYPE TCR8_Destroy(TCR8HANDLE h)
 		free(h);
 }
 
-DLLAPI BOOL CALLTYPE TCR8_SetComPort(TCR8HANDLE h, const char *dev_name, int nBaudrate)
+DLLAPI BOOL CALLTYPE TCR8_SetComPortString(TCR8HANDLE h, const char *dev_name, int nBaudrate)
 {
 	int nPort = 0;
 	if (!_IsValidHandle(h))
@@ -184,7 +184,7 @@ DLLAPI BOOL CALLTYPE TCR8_SetComPort(TCR8HANDLE h, const char *dev_name, int nBa
 #ifdef linux
 		strcpy(h->m_stPort, dev_name);
 #else
-		sscanf(dev_name, "COM%d", nPort);
+		sscanf(dev_name, "COM%d", &nPort);
 		h->m_nPort = nPort;
 #endif
 		h->m_nBaudrate = nBaudrate;
@@ -193,19 +193,20 @@ DLLAPI BOOL CALLTYPE TCR8_SetComPort(TCR8HANDLE h, const char *dev_name, int nBa
 	return FALSE;
 }
 
-DLLAPI BOOL CALLTYPE TCR8_SetComPortWindows(TCR8HANDLE h, int nPort, int nBaudrate)
+#ifdef linux
+DLLAPI BOOL CALLTYPE TCR8_SetComPort(TCR8HANDLE h, const char *dev_name, int nBaudrate)
 {
-	if (!_IsValidHandle(h))
-		return FALSE;
-	if (!_IsOpen(h))
-	{
-		h->m_nPort = nPort;
-		h->m_nBaudrate = nBaudrate;
-		return TRUE;
-	}
-	return FALSE;
+	return TCR8_SetComPortString(h, dev_name, nBaudrate);
 }
-
+#else
+DLLAPI BOOL CALLTYPE TCR8_SetComPort(TCR8HANDLE h, int port, int nBaudrate)
+{
+	char buffer[32] = { 0 };
+	sprintf(buffer, "COM%d", port);
+	return TCR8_SetComPortString(h, buffer, nBaudrate);
+}
+#endif
+ 
 DLLAPI BOOL CALLTYPE TCR8_SetCallback(TCR8HANDLE h, void (*cb)(void *, int, int))
 {
 	if (!_IsValidHandle(h))
@@ -2273,14 +2274,19 @@ static void ProcessProtocolPacket(TCR8HANDLE h, const char *packet)
 	}
 }
 
+// 超时时间设置长点，不然容易收不到完整的数据帧，经过测试，一般字节间隔最多30ms左右
 static inline int TCRGetChar(TCR8HANDLE h)
 {
 	int chr = 0;
 	if (_IsConnectWithCom(h))
 #ifdef linux
-		chr = tty_getc(h->m_tty, 10, 0);
+		chr = tty_getc(h->m_tty, 30, 0);
 #else
-		chr = tty_getc(h->m_tty, 10);
+	{
+		chr = tty_getc(h->m_tty, 40);
+	/*	if( chr >= 0 )
+			TRACE_LOG(h, "-> %c\r\n", chr); */
+	}
 #endif
 	else
 		chr = sock_getc(h->m_sockTCP, 10);
@@ -2293,7 +2299,7 @@ static int ReadFramePacket(TCR8HANDLE h, char *buf)
 	char *next = buf;
 	int chr = 0;
 	while ((chr = TCRGetChar(h)) >= 0 && chr != '<' && chr != '{')
-		TRACE_LOG(h, "skip:[%c]\r\n", chr);
+		TRACE_LOG(h, "skip:[%#x]\r\n", chr);
 	if (chr == '<')
 	{
 		*next++ = '<';
@@ -2353,7 +2359,7 @@ static DWORD WINAPI ProtocolThread(LPVOID lpParameter)
 	int i, ch;
 	int nSkip = 0, szNextFrame = 0;
 	int rlen;
-	char buf[512];
+	char buf[256] = {0};
 	char *ptr;
 	char packet_index;
 	TCR8HANDLE h = (TCR8HANDLE)lpParameter;
@@ -2431,7 +2437,7 @@ static DWORD WINAPI ProtocolThread(LPVOID lpParameter)
 		if (buf[0] == MSG_STX1)
 		{
 			TRACE_LOG(h, "Kernel commetn:[%s]\r\n", buf);
-			TriggerOnKernelLog(buf, rlen);
+			TriggerOnKernelLog(h, buf);
 			continue;
 		}
 		TRACE_LOG(h, "RX[%s]\r\n", buf);

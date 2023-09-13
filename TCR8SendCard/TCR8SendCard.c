@@ -93,7 +93,7 @@ DLLAPI void CALLTYPE ACM_SetEventCallBackFunc(ACM_EventCallBack cb)
 	m_TCR8UserData.pEventCB = cb;
 }
 
-DLLAPI BOOL CALLTYPE ACM_OpenDevice(const char *ttyDev, int nBaudRate)
+DLLAPI BOOL CALLTYPE ACM_OpenDeviceString(const char *ttyDev, int nBaudRate)
 {
 	FILE *fp = NULL;
 	char chDllPath[256];
@@ -102,11 +102,11 @@ DLLAPI BOOL CALLTYPE ACM_OpenDevice(const char *ttyDev, int nBaudRate)
 	int ComPort;
 	if (m_hTCR8 != NULL)
 	{
-		TCR8_Log(m_hTCR8, "【上位机重复调用】 ACM_OpenDevice()，先关闭上次打开的设备!\n");
+		TCR8_Log(m_hTCR8, "【上位机重复调用】 ACM_OpenDeviceString()，先关闭上次打开的设备!\n");
 		TCR8_Destroy(m_hTCR8);
 	}
 	m_hTCR8 = TCR8_Create();
-	TCR8_Log(m_hTCR8, "ACM_OpenDevice : %s %d \r\n", ttyDev, nBaudRate);
+	TCR8_Log(m_hTCR8, "ACM_OpenDeviceString : %s %d \r\n", ttyDev, nBaudRate);
 	if (m_hTCR8 == NULL)
 		return FALSE;
 
@@ -126,10 +126,9 @@ DLLAPI BOOL CALLTYPE ACM_OpenDevice(const char *ttyDev, int nBaudRate)
 
 	if (inet_addr(ttyDev) == INADDR_NONE)
 	{
-		TCR8_SetComPort(m_hTCR8, ttyDev, nBaudRate);
+		TCR8_SetComPortString(m_hTCR8, ttyDev, nBaudRate);
 		if (!TCR8_OpenDevice(m_hTCR8))
-		{
-
+		{ 
 			return FALSE;
 		}
 	}
@@ -149,6 +148,24 @@ DLLAPI BOOL CALLTYPE ACM_OpenDevice(const char *ttyDev, int nBaudRate)
 
 	return TRUE;
 }
+#ifdef linux
+DLLAPI BOOL CALLTYPE ACM_OpenDevice(const char *ttyName, int nBaudRate)
+{
+	return ACM_OpenDeviceString(ttyName, nBaudRate);
+}
+#else
+DLLAPI BOOL CALLTYPE ACM_OpenDevice(int nCOM, int nBaudRate)
+{
+	char ttyName[32] = { 0 };
+	sprintf(ttyName, "COM%d", nCOM);
+	return ACM_OpenDeviceString(ttyName, nBaudRate);
+}
+DLLAPI void CALLTYPE ACM_SetEventMessage(HWND hWnd, UINT MsgNum)
+{
+	m_TCR8UserData.hWnd = hWnd;
+	m_TCR8UserData.Msg = MsgNum;
+}
+#endif
 
 DLLAPI BOOL CALLTYPE ACM_CloseDevice(void)
 {

@@ -37,3 +37,5 @@ lc/tools/parklot
 master.code-workspace
 mod_adm_sqlite/ready
 mod_dock/client/client
+SPM_XinJiangApp/corelib/pay
+SPM_XinJiangApp/release/dst_TSP86/pay/pay

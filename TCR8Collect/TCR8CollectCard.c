@@ -63,26 +63,26 @@ DLLAPI void CALLTYPE ACC_SetEventMessage(HWND hWnd, UINT MsgNum)
 }
 #endif
 
-DLLAPI BOOL CALLTYPE ACC_OpenDevice(const char *ttyDev, int nBaudRate)
+BOOL ACC_OpenDeviceString(const char *ttyDev, int nBaudRate)
 {
 	DWORD dwEventMask;
-	printf("call function: ACC_OpenDevice\n" );
+	printf("call function: ACC_OpenDeviceString\n");
 	if (m_hTCR8 != NULL)
 	{
-		TCR8_Log(m_hTCR8, "【上位机重复调用】 ACC_OpenDevice()，先关闭上次打开的设备!\n");
+		TCR8_Log(m_hTCR8, "【上位机重复调用】 ACC_OpenDeviceString()，先关闭上次打开的设备!\n");
 		TCR8_Destroy(m_hTCR8);
 	}
 	m_hTCR8 = TCR8_Create();
 
 	if (m_hTCR8 == NULL)
 	{
-		printf("ACC_OpenDevice failed\n");
+		printf("ACC_OpenDeviceString failed\n");
 		return FALSE;
 	}
 
 	// enable TCR8 log
 	TCR8_EnableLog(m_hTCR8, TCR8LOG_DEFAULT_PATH);
-	TCR8_Log(m_hTCR8, "ACC_OpenDevice() COM = %s, nBaudRate = %d.\n", ttyDev, nBaudRate);
+	TCR8_Log(m_hTCR8, "ACC_OpenDeviceString() COM = %s, nBaudRate = %d.\n", ttyDev, nBaudRate);
 	TCR8_Log(m_hTCR8, "\tVersion %s\n", STRING_DLL_VRESION);
 
 	// set user data and callback function
@@ -95,8 +95,8 @@ DLLAPI BOOL CALLTYPE ACC_OpenDevice(const char *ttyDev, int nBaudRate)
 	TCR8_SetCallback(m_hTCR8, ACC_EventHandle);
 
 	if (inet_addr(ttyDev) == INADDR_NONE)
-	{ 
-		TCR8_SetComPort(m_hTCR8, ttyDev, nBaudRate);  
+	{
+		TCR8_SetComPortString(m_hTCR8, ttyDev, nBaudRate);
 		if (!TCR8_OpenDevice(m_hTCR8))
 		{
 			return FALSE;
@@ -117,6 +117,21 @@ DLLAPI BOOL CALLTYPE ACC_OpenDevice(const char *ttyDev, int nBaudRate)
 	return TRUE;
 }
 
+#ifdef linux 
+DLLAPI BOOL CALLTYPE ACC_OpenDevice(const char *ttyName, int nBaudRate)
+{
+	return ACC_OpenDeviceString(ttyName, nBaudRate);
+}
+#else  
+
+DLLAPI BOOL CALLTYPE ACC_OpenDevice(int nPort, int nBaudRate)
+{
+	char buffer[256] = { 0 };
+	sprintf(buffer, "COM%d", nPort);
+	return ACC_OpenDeviceString(buffer, nBaudRate);
+}
+#endif
+ 
 DLLAPI BOOL CALLTYPE ACC_CloseDevice(void)
 {
 	TCR8_Log(m_hTCR8, "【上位机调用】 ACC_CloseDevice()\n");

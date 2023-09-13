@@ -226,13 +226,21 @@ extern "C" {
 DLLAPI TCR8HANDLE CALLTYPE  TCR8_Create();
 DLLAPI void CALLTYPE TCR8_Destroy(TCR8HANDLE h); 
 /*
+	多平台兼容接口，以字符串形式接入
 	dev_name support 
 		Windows:
 			COM1 | 192.168.1.123
 		Linux:
 			/dev/ttyAMA3 | 192.168.1.123 
 */  
+DLLAPI BOOL CALLTYPE TCR8_SetComPortString(TCR8HANDLE h, const char *dev_name, int nBaudrate);
+
+// 兼容考虑，不破坏原始的接口
+#ifdef linux
 DLLAPI BOOL CALLTYPE TCR8_SetComPort(TCR8HANDLE h, const char *dev_name, int nBaudrate);
+#else
+DLLAPI BOOL CALLTYPE TCR8_SetComPort(TCR8HANDLE h, int port, int nBaudrate);
+#endif
  
 DLLAPI BOOL CALLTYPE TCR8_SetCallback( TCR8HANDLE h, void (*)( void *, int, int) ); 
 /* OpenDevice as serial mode */
