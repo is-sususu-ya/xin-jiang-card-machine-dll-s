@@ -1,0 +1,76 @@
+#!/bin/sh
+# add netbrd process
+killall netbrd
+cd /home/bin
+chmod +x netbrd-v100
+./netbrd-v100 &
+
+# sync time with rtc
+export TZ=CST-8
+chmod +x /home/bin/rtcsync
+/home/bin/rtcsync -l
+# hwclock -i
+
+# if local ip.cfg exist, execute it
+
+enable_sim="no"
+enable_qt="yes"
+
+# copy wcdma to /etc/pppd/
+if [ -e /home/etc/wcdma ]; then
+	cp /home/etc/wcdma /etc/ppp/peers/
+fi
+
+if [ -e /home/etc/chat-wcdma-connect ]; then
+	cp /home/etc/chat-wcdma-connect /etc/ppp/peers/
+fi
+
+if [ -f /home/etc/ip.cfg ]; then
+	sh /home/etc/ip.cfg
+fi
+
+# set and export PATH, LD_LIBRARY_PATH
+PATH="/usr/bin:/usr/sbin:/bin:/sbin:/home/bin"
+LD_LIBRARY_PATH="/usr/local/lib:/usr/lib:/home/lib:/opt/Qt4.8/lib:."
+
+export PATH
+export LD_LIBRARY_PATH
+
+# 为了支持老的文件系统程序运行，但是保存在里面的日志不会保存了
+mount -t ramfs /dev/mem /var
+mkdir /var/img
+mkdir /var/imgcache
+mount -t tmpfs -o size=32M tmpfs /var/img
+mkdir /var/tmp
+chmod 777 /var/tmp
+mkdir /var/log
+chmod 777 /var/log
+mkdir /var/dmfont
+mkdir /var/image
+
+if [ $enable_sim = "yes" ]; then
+	mkdir /var/run
+	cd /home/simserver
+	chmod +x simserver
+	./simserver -r >/dev/null
+fi
+
+if [ $enable_qt = "yes" ]; then
+	cd /var
+	mkdir loadko
+	tar xvf /home/loadko.tar.gz
+	cd loadko
+	# cd /home/loadko
+	sh ./loadko_tlv
+	mount -t ramfs /dev/mem /tmp
+	mount -t ramfs /dev/mem /opt/Qt4.8
+	cd /opt/Qt4.8/
+	tar xvf /home/qtlib.tar.gz
+fi
+
+# add app config
+
+# user app autorun
+cd /home/special
+chmod a+x ./special
+./special -r
