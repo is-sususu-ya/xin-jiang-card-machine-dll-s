@@ -48,6 +48,7 @@ typedef struct tagAppObject
 } APP_OBJECT_S;
 
 static APP_OBJECT_S theApp;
+static int g_recv_response = 0;
 #define SendLock() pthread_mutex_lock(&theApp.mutex)
 #define SendUnLock() pthread_mutex_unlock(&theApp.mutex)
  
@@ -405,11 +406,13 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         id = param[1];
         ctype = param[2];
         strncpy(request, param + 3, plen - 3);
+        g_recv_response = 1;
         add_http_post_task(index, id, ctype, request);
         trace_log("POST请求地址【%d】，id【%d】, Type:【%d】, 请求参数【%s】\r\n", index, id, ctype, request);
         break;
     case 0x91:
         id = param[0];
+        g_recv_response = 1;
         printf("Recv:%s\r\n", show_hex(param, plen));
         trace_log("GET请求id【%d】,地址:【%s】\r\n", id, request);
         strncpy(request, param + 1, plen - 1);
@@ -1068,6 +1071,8 @@ static void serial_protocol_callback(int id, int ret, char *response, int size)
     char buffer[2048] = {0};
     int asize = min(950, size);
     int32_t len;
+    if(!g_recv_response)
+        return;
     buf[0] = id & 0xff;
     buf[1] = abs(ret) & 0xff;
     strncpy(buf + 2, response, asize);

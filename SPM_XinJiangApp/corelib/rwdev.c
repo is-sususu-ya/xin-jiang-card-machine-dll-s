@@ -937,9 +937,9 @@ static void handle_lcd_info(int page, char *buf)
 	char gbk_buffer[1024] = {0};
 	char utf_buffer[1024] = {0};
 	sprintf(url, "%s", g_apconfig.ui_url);
-	if (!g_enable_lcd_page_remap)
-		page = page_remap(page, buf);
-	if (buf[0] == "{")
+	// if (!g_enable_lcd_page_remap)
+	// 	page = page_remap(page, buf);
+	if (strncmp(buf, "{", 1) == 0)
 		sprintf(gbk_buffer, "{\"page\":%d,\"msg\":%s}", page, buf);
 	else
 		sprintf(gbk_buffer, "{\"page\":%d,\"msg\":\"%s\"}", page, buf);
