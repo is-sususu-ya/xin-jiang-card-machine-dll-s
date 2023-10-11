@@ -262,6 +262,11 @@ int init_calling_data(char *input)
     char password[128] = {0};
     // 解析字符串 XX;XX
     sscanf(input, "%[^;];%d;%[^;];%[^;];", server, &port, phoneId, password);
+    if(port == 0)
+    {
+        trace_log("sip初始化信息为空!\r\n");
+        return -1;
+    }
     trace_log("init sip, server:[%s] port:[%d] user:[%s] password:[%s]\r\n", server, port, phoneId, password);
 
 #define MAX_TRY_COUNT 1
