@@ -144,7 +144,7 @@ int main(int argc, char *const argv[])
 			break;
 		}
 	}
-	strcpy(log_name, "/home/pay/log");
+	strcpy(log_name, "./log");
 	log_sys = mlog_init(log_name, "sys_run");
 	mlog_setlimitcnt(log_sys, 200, 2);
 

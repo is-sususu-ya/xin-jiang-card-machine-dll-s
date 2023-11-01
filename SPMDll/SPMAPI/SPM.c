@@ -474,7 +474,7 @@ EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeo
 	return TRUE;
 }
 
-EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int timeout)
+EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, int index, char *phoneId, int reply, int timeout)
 {
 	OBJECT_S *pSPM = (OBJECT_S *)h;
 	if (INVLAID_OBJ(pSPM))
