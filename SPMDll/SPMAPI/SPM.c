@@ -761,7 +761,7 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 			ltLastHeartBeat = GetTickCount() + 5000; // 5秒一次心跳
 			SPM_HeartBeat(pSPM);
 		}
-		// 超过10秒还未收到响应，表示设备离线
+		// 超过10秒还未收到响应，表 示设备离线
 		if (GetTickCount() > (ltLastHeard + 12000))
 		{
 			MTRACE_LOG(pSPM->hLog, "长时间没收到信息，认定设备离线！\r\n");
