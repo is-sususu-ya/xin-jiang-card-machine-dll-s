@@ -337,7 +337,7 @@ static int strendwith(const char *input, const char *endstr)
 static int update_hang_ctrl(char *url, const char *phoneId, int enable)
 {
     char buffer[256] = {0};
-    sprintf(buffer, "%s?phoneId=%s&hang=%s", g_apconfig.talk_ctrl, phoneId, enable ? "yes" : "no");
+    sprintf(buffer, "%s?hang=%s", g_apconfig.talk_ctrl, enable ? "yes" : "no");
     strcpy(url, buffer);
     trace_log("hang ctrl url:%s\r\n", url);
 }
