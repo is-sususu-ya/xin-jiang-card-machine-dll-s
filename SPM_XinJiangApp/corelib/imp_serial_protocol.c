@@ -47,6 +47,9 @@ typedef struct tagAppObject
     pthread_mutex_t mutex;
 } APP_OBJECT_S;
 
+static int nhumidity = 0;
+static int ntemperature = 0;
+
 static APP_OBJECT_S theApp;
 static int g_recv_response = 0;
 #define SendLock() pthread_mutex_lock(&theApp.mutex)
@@ -561,7 +564,7 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
     }
     break;
     case 0x82:        
-        trace_log("接听控制.");
+        trace_log("接听控制.\r\n");
         memcpy(input, param + 4, plen - 5);
         sscanf((char *)input, "%[^;];%d", phoneId, &code);
         trace_log("phoneId:[%s] code:[%d]\r\n", phoneId, code);
@@ -578,6 +581,10 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
             update_hang_ctrl(url, phoneId, 0);
             add_http_get_task(id, url);
         }
+        break;
+    case 0x83:
+        trace_log("环境温湿度获取.\r\n");
+        spm_report_temp_hum(ntemperature, nhumidity);
         break;
     default:
         break;
@@ -977,8 +984,6 @@ void spm_answer_talk(const char *phoneId)
     SendUnLock();
 }
 
-
-
 void spm_call_init_success(int ret)
 {
     int len;
@@ -1004,6 +1009,23 @@ void spm_answer_status(const char *status)
     buf[0] = code & 0xff;
     trace_log("上报语音接入状态:[%s]\r\n", status );
     len = create_package(0, 0x87, (uint8_t *)buf, 4, buffer, sizeof(buffer));
+    SendLock();
+    if (theApp.peer_fd > 0)
+        sock_write_n_bytes(theApp.peer_fd, buffer, len);
+    if (theApp.tty_fd > 0)
+        tty_write(theApp.tty_fd, buffer, len);
+    SendUnLock();
+}
+
+void spm_report_temp_hum(int temp, int hum)
+{
+    int len;
+    char buf[32] = {0};
+    char buffer[64] = {0};
+    buf[0] = temp & 0xff;
+    buf[1] = hum & 0xff;
+    trace_log("上报环境温湿度信息[%d.%02d][%d.%02d]..\r\n", temp / 100, temp % 100, hum / 100, hum % 100);
+    len = create_package(0, 0x88, (uint8_t *)buf, 4, buffer, sizeof(buffer));
     SendLock();
     if (theApp.peer_fd > 0)
         sock_write_n_bytes(theApp.peer_fd, buffer, len);
