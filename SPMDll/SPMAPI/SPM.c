@@ -99,20 +99,13 @@ static DWORD WINAPI ProtocolThread(HANDLE h);
 #endif
 
 #ifdef linux
-unsigned long long GetTickCount()
-{
-	static signed long long begin_time = 0;
-	static signed long long now_time;
-	struct timespec tp;
-	unsigned long tmsec = 0;
-	if (clock_gettime(CLOCK_MONOTONIC, &tp) != -1)
-	{
-		now_time = tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
-	}
-	if (begin_time == 0)
-		begin_time = now_time;
-	tmsec = (unsigned long long)(now_time - begin_time);
-	return tmsec;
+int64_t GetSysTickCount()
+{ 
+	struct timespec tp; 
+	if (clock_gettime(CLOCK_MONOTONIC, &tp) != -1) 
+		return (int64_t)tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
+	printf("get tick error\n");
+	return 0;
 }
 #endif
 
@@ -446,16 +439,16 @@ EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char *server, int port, char *phone
 	unsigned char recv_buf[2048] = {0};
 	uint8_t *buf = recv_buf;
 	int len = 0;
-	DWORD ltSend = 0;
+	int64_t ltSend = 0;
 	sprintf(text, "%s;%d;%s;%s", server, port, phoneId, password);
 	strcpy(tmp + 4, text);
 	len += strlen(text) + 5;
 	len = create_package(0, 0x80, tmp, len, buffer, sizeof(buffer));
 	SendPacket(pSPM, buffer, len);
-	ltSend = GetTickCount() + 5000;
+	ltSend = GetSysTickCount() + 5000;
 	nWaitType = 0;
 	// 简单操作，等待5秒
-	while (ltSend > GetTickCount() && nWaitType == 0)
+	while (ltSend > GetSysTickCount() && nWaitType == 0)
 		usleep(100000);
 	return nWaitType == WAIT_FLAG_PHONE_INIT_SUCCESS; // 1:成功 其他失败
 }
@@ -486,7 +479,7 @@ EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, int index, char *phoneId, int rep
 	uint8_t tmp[256] = {0};
 	char text[256] = {0};
 	int len = 0;
-	DWORD ltSend = 0;
+	int64_t ltSend = 0;
 	strcpy(phoneId, pSPM->phoneId);
 	sprintf(text, "%s;%d", phoneId, reply);
 	strcpy(tmp + 4, text);
@@ -494,7 +487,7 @@ EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, int index, char *phoneId, int rep
 	len = create_package(0, 0x82, tmp, len, buffer, sizeof(buffer));
 	SendPacket(pSPM, buffer, len);
 	ltSend = ltSend == 0 ? 5000 : ltSend;
-	ltSend = GetTickCount() + timeout < 1000 ? (timeout * 1000) : timeout;
+	ltSend = GetSysTickCount() + timeout < 1000 ? (timeout * 1000) : timeout;
 	// 不等了，不然收不到恢复，这里调用可能时回调处理的，所以不等了
 	return TRUE;
 }
@@ -730,13 +723,14 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 {
 	int len;
 	OBJECT_S *pSPM = (OBJECT_S *)h;
-	DWORD ltLastHeard = GetTickCount();
+	int64_t ltLastHeard = GetSysTickCount();
 	int last_stat = 0;
 	int this_stat = 0;
 	uint8_t param[1024];
+	int64_t ltLastConnect = 0;
 	char text[1024] = {0};
 	int size;
-	DWORD ltLastHeartBeat = GetTickCount();
+	int64_t ltLastHeartBeat = GetSysTickCount();
 	int cmd = 0;
 	unsigned char recv_buf[2048] = {0};
 	uint8_t *buf = recv_buf;
@@ -757,30 +751,36 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 			last_stat = this_stat;
 			MTRACE_LOG(pSPM->hLog, "状态切换至：%d \r\n", last_stat);
 		}
-		if (pSPM->connect_type != TTY_TYPE && pSPM->fd < 0)
+		if (pSPM->connect_type != TTY_TYPE && pSPM->fd <= 0)
 		{
+			if( GetSysTickCount() < ltLastConnect + 2000 )
+			{
+				spm_sleep(2000);
+				continue;
+			}
 			pSPM->fd = sock_connect(pSPM->dev_name, pSPM->nPort);
+			ltLastConnect = GetSysTickCount();
 			if (pSPM->fd == INVALID_SOCKET)
 			{
-				MTRACE_LOG(pSPM->hLog, "Connected to [%s] [%d] Led Failed!\n", (pSPM->dev_name), pSPM->nPort);
+				MTRACE_LOG(pSPM->hLog, "Connected to [%s] [%d] SPM Failed!\n", (pSPM->dev_name), pSPM->nPort);
 				spm_sleep(500);
 				this_stat = 0;
 				pSPM->onLine = 0;
 				continue;
 			}
-			ltLastHeard = GetTickCount();
+			ltLastHeard = GetSysTickCount();
 			this_stat = 1;
-			MTRACE_LOG(pSPM->hLog, "Thread Connected to Led Success!\n");
+			MTRACE_LOG(pSPM->hLog, "Thread Connected to SPM Success!\n");
 			continue;
 		}
-		if (GetTickCount() > ltLastHeartBeat)
+		if (GetSysTickCount() > ltLastHeartBeat)
 		{
 			MTRACE_LOG(pSPM->hLog, "发送心跳！\r\n");
-			ltLastHeartBeat = GetTickCount() + 5000; // 5秒一次心跳
+			ltLastHeartBeat = GetSysTickCount() + 5000; // 5秒一次心跳
 			SPM_HeartBeat(pSPM);
 		}
 		// 超过10秒还未收到响应，表 示设备离线
-		if (GetTickCount() > (ltLastHeard + 12000))
+		if (GetSysTickCount() > (ltLastHeard + 12000))
 		{
 			MTRACE_LOG(pSPM->hLog, "长时间没收到信息，认定设备离线！\r\n");
 			CloseSocket(pSPM);
@@ -799,7 +799,7 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 			if (buf[0] == 0xa0 || buf[0] == 0xa1)
 			{
 				this_stat = 1;
-				ltLastHeard = GetTickCount();
+				ltLastHeard = GetSysTickCount();
 				// 收到发来的数据帧，响应
 				if (buf[0] == 0xa0)
 				{

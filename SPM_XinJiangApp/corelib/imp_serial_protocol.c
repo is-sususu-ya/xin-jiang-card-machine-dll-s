@@ -24,7 +24,7 @@
 #include "spm_config.h"
 #include "cJSON.h"
 
-typedef unsigned long long UInt64;
+typedef unsigned long long int64_t;
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define DATA_TCP 1
@@ -54,23 +54,15 @@ static APP_OBJECT_S theApp;
 static int g_recv_response = 0;
 #define SendLock() pthread_mutex_lock(&theApp.mutex)
 #define SendUnLock() pthread_mutex_unlock(&theApp.mutex)
- 
-extern void trace_log(const char *fmt,...);
 
-static UInt64 GetTickCount()
+extern void trace_log(const char *fmt, ...);
+
+static int64_t GetTickCount()
 {
-    static UInt64 begin_time = 0;
-    static UInt64 now_time;
     struct timespec tp;
-    UInt64 tmsec = 0;
     if (clock_gettime(CLOCK_MONOTONIC, &tp) != -1)
-    {
-        now_time = tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
-    }
-    if (begin_time == 0)
-        begin_time = now_time;
-    tmsec = (UInt64)(now_time - begin_time);
-    return tmsec;
+        return (int64_t)tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
+    return 0;
 }
 
 static const char *show_hex(uint8_t *buf, int32_t size)
@@ -265,7 +257,7 @@ int init_calling_data(char *input)
     char password[128] = {0};
     // 解析字符串 XX;XX
     sscanf(input, "%[^;];%d;%[^;];%[^;];", server, &port, phoneId, password);
-    if(port == 0)
+    if (port == 0)
     {
         trace_log("sip初始化信息为空!\r\n");
         return -1;
@@ -563,7 +555,7 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         }
     }
     break;
-    case 0x82:        
+    case 0x82:
         trace_log("接听控制.\r\n");
         memcpy(input, param + 4, plen - 5);
         sscanf((char *)input, "%[^;];%d", phoneId, &code);
@@ -858,8 +850,8 @@ void *protocol_thread(void *arg)
     APP_OBJECT_S *pHvObj = &theApp;
     uint32_t nsel, fdmax;
     const char *dev = NULL;
-    UInt64 ltLastHeard = GetTickCount();
-    UInt64 ltLastSnd = GetTickCount();
+    int64_t ltLastHeard = GetTickCount();
+    int64_t ltLastSnd = GetTickCount();
     struct timeval tv;
     int peer_fd = 0;
     int fd;
@@ -1007,7 +999,7 @@ void spm_answer_status(const char *status)
     char buffer[256] = {0};
     int code = atoi(status);
     buf[0] = code & 0xff;
-    trace_log("上报语音接入状态:[%s]\r\n", status );
+    trace_log("上报语音接入状态:[%s]\r\n", status);
     len = create_package(0, 0x87, (uint8_t *)buf, 4, buffer, sizeof(buffer));
     SendLock();
     if (theApp.peer_fd > 0)
@@ -1098,7 +1090,7 @@ static void serial_protocol_callback(int id, int ret, char *response, int size)
     char buffer[2048] = {0};
     int asize = min(950, size);
     int32_t len;
-    if(!g_recv_response)
+    if (!g_recv_response)
         return;
     buf[0] = id & 0xff;
     buf[1] = abs(ret) & 0xff;

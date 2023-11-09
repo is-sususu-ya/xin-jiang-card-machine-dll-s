@@ -25,7 +25,7 @@
 #include "ts_robot.h"
 #include "cJSON.h"
 
-typedef unsigned long long UInt64;
+typedef unsigned long long int64_t;
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define DATA_TCP 1
@@ -75,20 +75,12 @@ void trace_log(const char *fmt, ...)
 
 // extern void trace_log(const char *fmt,...);
 
-static UInt64 GetTickCount()
-{
-    static UInt64 begin_time = 0;
-    static UInt64 now_time;
-    struct timespec tp;
-    UInt64 tmsec = 0;
-    if (clock_gettime(CLOCK_MONOTONIC, &tp) != -1)
-    {
-        now_time = tp.tv_sec * 1000 + tp.tv_nsec / 1000000;
-    }
-    if (begin_time == 0)
-        begin_time = now_time;
-    tmsec = (UInt64)(now_time - begin_time);
-    return tmsec;
+static int64_t GetTickCount()
+{ 
+    struct timespec tp; 
+    if (clock_gettime(CLOCK_MONOTONIC, &tp) != -1) 
+        return  (int64_t)tp.tv_sec * 1000 + tp.tv_nsec / 1000000;  
+    return 0;
 }
 
 static const char *show_hex(uint8_t *buf, int32_t size)
@@ -902,14 +894,13 @@ success:
 void *protocol_thread(void *arg)
 {
     log_oper = mlog_init("./log", "operation");
-	mlog_setlimitcnt(log_oper, 200, 2);
-
+	mlog_setlimitcnt(log_oper, 200, 2); 
     APP_OBJECT_S *pHvObj = &theApp;
     uint32_t nsel, fdmax;
     const char *dev = NULL;
-    UInt64 ltLastHeard = GetTickCount();
-    UInt64 ltLastSnd = GetTickCount();
-    UInt64 ltLastNewClient = GetTickCount();
+    int64_t ltLastHeard = GetTickCount();
+    int64_t ltLastSnd = GetTickCount();
+    int64_t ltLastNewClient = GetTickCount(); 
     int first_flag = 1;
     struct timeval tv;
     int peer_fd = 0;
@@ -951,8 +942,8 @@ void *protocol_thread(void *arg)
         tv.tv_usec = 10 * 1000;
         nsel = select(fdmax + 1, &read_fds, NULL, NULL, &tv);
         if (nsel > 0)
-        {
-            if (FD_ISSET(pHvObj->listen_tcp, &read_fds) && (ltLastNewClient + 5000 < GetTickCount() || first_flag))
+        { 
+            if (FD_ISSET(pHvObj->listen_tcp, &read_fds) && (ltLastNewClient + 500 < GetTickCount() || first_flag))
             {
                 first_flag = 0;
                 fd = sock_accept(pHvObj->listen_tcp);
