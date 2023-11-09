@@ -13,7 +13,6 @@
 
 #include "http_rpc.h"
 #include "cJSON.h"
-#include "dbg_printf.h"
 #include "utils_ptrlist.h"
 
 static cJSON *list_to_json_object(StrMap *list)
@@ -92,6 +91,8 @@ static int string_to_list(const char *input, StrMap *list)
 	return 0;
 }
 
+extern void trace_log(const char *fmt, ...);
+
 static int rpc_calling_fake(const char *input, char *output)
 {
 	const char *phoneId = NULL;
@@ -100,13 +101,13 @@ static int rpc_calling_fake(const char *input, char *output)
 	phoneId = StrMap_safe_get(&maplist, "phoneId", "");
 	if (strcmp(phoneId, "") == 0)
 	{
-		PRINTF("no phoneId parameter..\r\n");
+		trace_log("no phoneId parameter..\r\n");
 		strcpy(output, "no phoneId");
 		return 0;
 	}
 	else
 	{
-		PRINTF("phoneId :%s\r\n", phoneId);
+		trace_log("phoneId :%s\r\n", phoneId);
 		strcpy(output, "success");
 		spm_answer_talk(phoneId);
 		return 0;
@@ -119,7 +120,7 @@ static int rpc_status_fake(const char *input, char *output)
 	StrMap maplist = PTRLIST_INITIALIZER;
 	string_to_list(input, &maplist);
 	status = StrMap_safe_get(&maplist, "status", "");
-	PRINTF("call status :%s\r\n", status);
+	trace_log("call status :%s\r\n", status);
 	strcpy(output, "success");
 	spm_answer_status(status);
 }

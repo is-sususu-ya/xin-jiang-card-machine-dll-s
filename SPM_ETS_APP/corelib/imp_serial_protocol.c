@@ -17,7 +17,7 @@
 #include "rwdev.h"
 #include "utils_net.h"
 #include "utils_web.h"
-#include "dbg_printf.h"
+// #include "dbg_trace_log.h"
 #include "utils_tty.h"
 #include "imp_http_task.h"
 #include "lc_config.h"
@@ -50,11 +50,28 @@ typedef struct tagAppObject
     pthread_mutex_t mutex;
 } APP_OBJECT_S;
 
+static int nhumidity = 0;
+static int ntemperature = 0;
+
 static APP_OBJECT_S theApp;
 #define SendLock() pthread_mutex_lock(&theApp.mutex)
 #define SendUnLock() pthread_mutex_unlock(&theApp.mutex)
 
-#define trace_log printf
+static void *log_oper = NULL;
+
+void trace_log(const char *fmt, ...)
+{
+	va_list va;
+	int rc;
+	char str[4096] = {0};
+	if (log_oper == NULL)
+		return;
+	va_start(va, fmt);
+	rc = mtrace_vlog(log_oper, fmt, va);
+	vsprintf(str, fmt, va);
+	va_end(va);
+	printf(str);
+}
 
 // extern void trace_log(const char *fmt,...);
 
@@ -266,6 +283,11 @@ int init_calling_data(char *input)
     char password[128] = {0};
     // 解析字符串 XX;XX
     sscanf(input, "%[^;];%d;%[^;];%[^;];", server, &port, phoneId, password);
+    if(port == 0)
+    {
+        trace_log("sip初始化信息为空!\r\n");
+        return -1;
+    }
     trace_log("init sip, server:[%s] port:[%d] user:[%s] password:[%s]\r\n", server, port, phoneId, password);
 
 #define MAX_TRY_COUNT 1
@@ -336,7 +358,7 @@ static int strendwith(const char *input, const char *endstr)
 static int update_hang_ctrl(char *url, const char *phoneId, int enable)
 {
     char buffer[256] = {0};
-    sprintf(buffer, "%s?phoneId=%s&hang=%s", g_apconfig.talk_ctrl, phoneId, enable ? "yes" : "no");
+    sprintf(buffer, "%s?&hang=%s", g_apconfig.talk_ctrl, enable ? "yes" : "no");
     strcpy(url, buffer);
     trace_log("hang ctrl url:%s\r\n", url);
 }
@@ -386,24 +408,24 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
     int code;
     char phoneId[128] = {0};
     char input[1024] = {0};
-    PRINTF("cmd:%#x \r\n", cmd);
+    trace_log("cmd:%#x \r\n", cmd);
     switch (cmd)
     {
     case 0x00:
-        PRINTF("%s 心跳！\r\n", time_stamp());
+        trace_log("%s 心跳！\r\n", time_stamp());
         len = create_package(1, 0x00, NULL, 0, buffer, sizeof(buffer));
         break;
     case 0x02:
         index = param[0];
         strncpy((char *)url, (char *)param + 1, plen - 1);
-        PRINTF("登记URL地址[%d][%s]！\r\n", index, url);
+        trace_log("登记URL地址[%d][%s]！\r\n", index, url);
         register_http_url(index, url);
         break;
     case 0x03:
         timeout = param[0];
         ptout = param[1];
         http_set_timeout(timeout, ptout);
-        PRINTF("设置http超时参数[%d][%d]\r\n", timeout, ptout);
+        trace_log("设置http超时参数[%d][%d]\r\n", timeout, ptout);
         break;
     case 0x90:
         index = param[0];
@@ -411,16 +433,16 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         ctype = param[2];
         strncpy(request, param + 3, plen - 3);
         add_http_post_task(index, id, ctype, request);
-        PRINTF("POST请求地址【%d】，id【%d】, Type:【%d】, 请求参数【%s】\r\n", index, id, ctype, request);
+        trace_log("POST请求地址【%d】，id【%d】, Type:【%d】, 请求参数【%s】\r\n", index, id, ctype, request);
         break;
     case 0x91:
         id = param[0];
         strncpy(request, param + 1, plen - 1);
         add_http_get_task(id, request);
-        PRINTF("GET请求id【%d】,地址:【%s】\r\n", id, request);
+        trace_log("GET请求id【%d】,地址:【%s】\r\n", id, request);
         break;
     case 0x10:
-        PRINTF("系统控制, 控制码：%d ！\r\n", param[0]);
+        trace_log("系统控制, 控制码：%d ！\r\n", param[0]);
         if (param[0] == 0x01)
         {
             pHvObj->enableQrCode = 1;
@@ -436,7 +458,7 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         len = create_package(1, 0x10, NULL, 0, buffer, sizeof(buffer));
         break;
     case 0x01:
-        PRINTF("设置系统时间！\r\n");
+        trace_log("设置系统时间！\r\n");
         if (len > 14)
         {
             memcpy(tmp_buf, param, 17);
@@ -457,23 +479,23 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         len = create_package(1, 0x01, NULL, 0, buffer, sizeof(buffer));
         break;
     case 0x20:
-        PRINTF("LED显示控制！\r\n");
+        trace_log("LED显示控制！\r\n");
         nNumber = param[0] & 0x0f;
         nFormat = param[1] & 0x0f;
         nColor = param[2] | param[3] << 8 | param[4] << 16;
         memset(buffer, 0, sizeof(buffer));
         memcpy(buffer, param + 5, plen - 5);
         led_display_text(nNumber, nFormat, nColor, buffer);
-        PRINTF("显示内容: %s - 行：%d \r\n", buffer, nNumber);
+        trace_log("显示内容: %s - 行：%d \r\n", buffer, nNumber);
         len = create_package(1, 0x20, NULL, 0, buffer, sizeof(buffer));
         break;
     case 0x04:
-        PRINTF("清屏！\r\n");
+        trace_log("清屏！\r\n");
         led_clear_all();
         len = create_package(1, 0x04, NULL, 0, buffer, sizeof(buffer));
         break;
     case 0x50:
-        PRINTF("语音播报!\r\n");
+        trace_log("语音播报!\r\n");
         nNumber = param[0];
         memset(buffer, 0, sizeof(buffer));
         memcpy(buffer, param + 1, plen - 1);
@@ -486,12 +508,12 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         trace_log("向led模组发送语音控制！\r\n");
         led_voice_send(nNumber, buffer);
 #endif
-        PRINTF("播报内容: [%d] %s\r\n", nNumber, buffer);
-        PRINTF("param: %s\r\n", param);
+        trace_log("播报内容: [%d] %s\r\n", nNumber, buffer);
+        trace_log("param: %s\r\n", param);
         len = create_package(1, 0x50, NULL, 0, buffer, sizeof(buffer));
         break;
     case 0x60:
-        PRINTF("LCD控制!\r\n");
+        trace_log("LCD控制!\r\n");
         index = param[0];
         if (DevCallBack)
         {
@@ -499,18 +521,18 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
             memcpy(buffer, param + 1, plen - 1);
             if (buffer[0] == 0)
             {
-                PRINTF("参数：【%d】页，负载为空！\r\n", index);
+                trace_log("参数：【%d】页，负载为空！\r\n", index);
                 DevCallBack(EVT_CHANGE_PAGE, index, NULL);
             }
             else
             {
-                PRINTF("参数：【%d】页，负载[%s]\r\n", index, buffer);
+                trace_log("参数：【%d】页，负载[%s]\r\n", index, buffer);
                 DevCallBack(EVT_CHANGE_PAGE, index, buffer);
             }
         }
         else
         {
-            PRINTF("无应用注册回调，不做处理！！\r\n");
+            trace_log("无应用注册回调，不做处理！！\r\n");
         }
         len = create_package(1, 0x60, NULL, 0, buffer, sizeof(buffer));
         break;
@@ -557,7 +579,7 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         }
         break;
     case 0x80:
-        PRINTF("初始化语音对讲参数..\r\n");
+        trace_log("初始化语音对讲参数..\r\n");
         memcpy(input, param + 4, plen - 5);
         ret = init_calling_data(input);
         spm_call_init_success(ret);
@@ -566,17 +588,17 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
     {
         memcpy(input, param + 4, plen - 5);
         sscanf((char *)input, "%d;%[^;];", &index, phoneId);
-        PRINTF("spm call phone:[%d][%s]\r\n", index, input);
+        trace_log("spm call phone:[%d][%s]\r\n", index, input);
         if (index == 0)
         {
-            PRINTF("触发上工位语音对讲..\r\n");
+            trace_log("触发上工位语音对讲..\r\n");
             strcpy(url, g_apconfig.talk_back_up);
             update_phone_id(url, phoneId);
             add_http_get_task(0, url);
         }
         else if (index == 1)
         {
-            PRINTF("触发下工位语音对讲..\r\n");
+            trace_log("触发下工位语音对讲..\r\n");
             strcpy(url, g_apconfig.talk_back_dwn);
             update_phone_id(url, phoneId);
             add_http_get_task(0, url);
@@ -584,23 +606,27 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
     }
     break;
     case 0x82:        
-        PRINTF("接听控制.");
+        trace_log("接听控制.");
         memcpy(input, param + 4, plen - 5);
         sscanf((char *)input, "%[^;];%d", phoneId, &code);
-        PRINTF("phoneId:[%s] code:[%d]\r\n", phoneId, code);
+        trace_log("phoneId:[%s] code:[%d]\r\n", phoneId, code);
         // 如果是默认接听的话，就无所谓了
         if (code == 100)
         {
-            PRINTF("接听.\r\n");
+            trace_log("接听.\r\n");
             update_hang_ctrl(url, phoneId, 1);
             add_http_get_task(id, url);
         }
         else if (code == 101)
         {
-            PRINTF("挂机\r\n");
+            trace_log("挂机\r\n");
             update_hang_ctrl(url, phoneId, 0);
             add_http_get_task(id, url);
         }
+        break;
+    case 0x83:
+        trace_log("环境温湿度获取.\r\n");
+        spm_report_temp_hum(ntemperature, nhumidity);
         break;
     default:
         break;
@@ -875,11 +901,16 @@ success:
 /* 上位机协议解析线程 */
 void *protocol_thread(void *arg)
 {
+    log_oper = mlog_init("./log", "operation");
+	mlog_setlimitcnt(log_oper, 200, 2);
+
     APP_OBJECT_S *pHvObj = &theApp;
     uint32_t nsel, fdmax;
     const char *dev = NULL;
     UInt64 ltLastHeard = GetTickCount();
     UInt64 ltLastSnd = GetTickCount();
+    UInt64 ltLastNewClient = GetTickCount();
+    int first_flag = 1;
     struct timeval tv;
     int peer_fd = 0;
     int fd;
@@ -921,8 +952,9 @@ void *protocol_thread(void *arg)
         nsel = select(fdmax + 1, &read_fds, NULL, NULL, &tv);
         if (nsel > 0)
         {
-            if (FD_ISSET(pHvObj->listen_tcp, &read_fds))
+            if (FD_ISSET(pHvObj->listen_tcp, &read_fds) && (ltLastNewClient + 5000 < GetTickCount() || first_flag))
             {
+                first_flag = 0;
                 fd = sock_accept(pHvObj->listen_tcp);
                 if (peer_fd > 0)
                 {
@@ -933,6 +965,7 @@ void *protocol_thread(void *arg)
                 peer_fd = fd;
                 pHvObj->peer_fd = fd;
                 ltLastHeard = GetTickCount();
+                ltLastNewClient = GetTickCount();
                 continue;
             }
             if (peer_fd > 0 && FD_ISSET(peer_fd, &read_fds))
@@ -970,6 +1003,23 @@ void *protocol_thread(void *arg)
         }
     }
     return NULL;
+}
+
+void spm_report_temp_hum(int temp, int hum)
+{
+    int len;
+    char buf[32] = {0};
+    char buffer[64] = {0};
+    buf[0] = temp & 0xff;
+    buf[1] = hum & 0xff;
+    trace_log("上报环境温湿度信息[%d.%02d][%d.%02d]..\r\n", temp / 100, temp % 100, hum / 100, hum % 100);
+    len = create_package(0, 0x88, (uint8_t *)buf, 4, buffer, sizeof(buffer));
+    SendLock();
+    if (theApp.peer_fd > 0)
+        sock_write_n_bytes(theApp.peer_fd, buffer, len);
+    if (theApp.tty_fd > 0)
+        tty_write(theApp.tty_fd, buffer, len);
+    SendUnLock();
 }
 
 void spm_gpio_change(int di_last, int di_this)
@@ -1089,7 +1139,7 @@ void spm_send_qrcode(int index, const char *qrcode)
     if (theApp.peer_fd > 0)
         sock_write_n_bytes(theApp.peer_fd, buffer, len);
     tty_write(theApp.tty_fd, buffer, len);
-    PRINTF("发送二维码数据： %s \r\n", show_hex(buffer, len));
+    trace_log("发送二维码数据： %s \r\n", show_hex(buffer, len));
 #endif
     SendUnLock();
 }
@@ -1111,7 +1161,7 @@ static void serial_protocol_callback(int id, int ret, char *response, int size)
 #ifndef ENABLE_TTY_ONLY_QRCODE
     tty_write(theApp.tty_fd, buffer, len);
 #endif
-    PRINTF("发送响应参数：%s \r\n", show_hex(buffer, len));
+    trace_log("发送响应参数：%s \r\n", show_hex(buffer, len));
     SendUnLock();
 }
 

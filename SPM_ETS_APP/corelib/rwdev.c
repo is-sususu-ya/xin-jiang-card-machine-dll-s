@@ -75,9 +75,9 @@ static const char *config_def =
 	"ui_udp=192.168.1.132                       # UDP更新界面方式，NUC地址\r\n"
 	"ui_url=http://192.168.1.111:9110/xj/autorun #ui控制\r\n"
 	"talk_ctrl=http://172.16.13.16:9110/xj/getAllows     # 接听控制接口 \r\n"
-	"talk_back_up=http://172.16.13.16:9110/xj/Calling?camera=0&phoneId=1001  # 上对讲\r\n"
-	"talk_back_dwn=http://172.16.13.16:9110/xj/Calling?camera=1&phoneId=1002  # 下对讲\r\n"
-	"talk_third=http://172.16.13.16:9110/xj/sipInit"
+	"talk_back_up=http://172.16.13.16:9110/xj/xjCalling?camera=0&phoneId=1001  # 上对讲\r\n"
+	"talk_back_dwn=http://172.16.13.16:9110/xj/xjCalling?camera=1&phoneId=1002  # 下对讲\r\n"
+	"talk_third=http://172.16.13.16:9110/xj/sipInit\r\n"
 	"qr_scan_up=192.168.1.99                    # 扫码IP\r\n"
 	"robot_hand=/dev/ttyAMA2                    # 机械手串口\r\n";
 
@@ -982,24 +982,20 @@ void Qr_Ctrl(int opt)
 	return;
 }
 
-static void CtrlScanner_atLedUiSeitch(Page)
+static void CtrlScanner_atLedUiSeitch(int Page)
 {
 	if (1)
 	{
 		switch (Page)
 		{
-		case 0:
 		case 3:
 			/* 关闭扫码 */
 			Qr_Ctrl(0);
 			break;
-
-		case 4:
 		case 5:
 			/* 打开扫码 */
 			Qr_Ctrl(1);
 			break;
-
 		default:
 			Qr_Ctrl(0);
 			break;
@@ -1016,14 +1012,22 @@ static void handle_lcd_info(int page, char *buf)
 	sprintf(url, "%s", g_apconfig.ui_url);
 	// if (!g_enable_lcd_page_remap)
 	// 	page = page_remap(page, buf);
-	if (buf[0] == "{")
+	printf("\n\n%d %s\n\n", __LINE__, __func__);
+	if (strncmp(buf, "{", 1) == 0)
 		sprintf(gbk_buffer, "{\"page\":%d,\"msg\":%s}", page, buf);
 	else
 		sprintf(gbk_buffer, "{\"page\":%d,\"msg\":\"%s\"}", page, buf);
-
-	CtrlScanner_atLedUiSeitch(page);
+	printf("\n\n%d %s\n\n", __LINE__, __func__);
+	// CtrlScanner_atLedUiSeitch(page);
+	if(page == 5)
+		Qr_Ctrl(1);
+	else
+		Qr_Ctrl(0);
+	printf("\n\n%d %s\n\n", __LINE__, __func__);
 	GBKToUTF8(gbk_buffer, strlen(gbk_buffer), utf_buffer);
+	printf("\n\n%d %s\n\n", __LINE__, __func__);
 	add_http_url_post_task(0, url, 0, utf_buffer);
+	printf("\n\n%d %s\n\n", __LINE__, __func__);
 	ltrace("URL:%s\r\nDATA:%s\r\n", url, gbk_buffer);
 }
 

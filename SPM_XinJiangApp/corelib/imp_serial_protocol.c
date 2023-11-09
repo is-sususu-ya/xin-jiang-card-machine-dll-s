@@ -55,7 +55,7 @@ static int g_recv_response = 0;
 #define SendLock() pthread_mutex_lock(&theApp.mutex)
 #define SendUnLock() pthread_mutex_unlock(&theApp.mutex)
  
- extern void trace_log(const char *fmt,...);
+extern void trace_log(const char *fmt,...);
 
 static UInt64 GetTickCount()
 {
