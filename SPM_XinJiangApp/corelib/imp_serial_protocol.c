@@ -24,7 +24,7 @@
 #include "spm_config.h"
 #include "cJSON.h"
 
-typedef unsigned long long int64_t;
+// typedef unsigned long long int64_t;
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define DATA_TCP 1
@@ -434,6 +434,8 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         {
             memcpy(tmp_buf, param, 17);
             tmp_buf[17] = 0;
+            puts(tmp_buf);
+            puts(show_hex(tmp_buf, 17));
             if (strptime((const char *)tmp_buf, "%Y%m%d%H%M%S", &m_tm))
             {
                 now = mktime(&m_tm);
@@ -852,6 +854,8 @@ void *protocol_thread(void *arg)
     const char *dev = NULL;
     int64_t ltLastHeard = GetTickCount();
     int64_t ltLastSnd = GetTickCount();
+    int64_t ltLastNewClient = GetTickCount();
+    int first_flag = 1;
     struct timeval tv;
     int peer_fd = 0;
     int fd;
@@ -893,8 +897,9 @@ void *protocol_thread(void *arg)
         nsel = select(fdmax + 1, &read_fds, NULL, NULL, &tv);
         if (nsel > 0)
         {
-            if (FD_ISSET(pHvObj->listen_tcp, &read_fds))
+            if (FD_ISSET(pHvObj->listen_tcp, &read_fds) && (ltLastNewClient + 1000 < GetTickCount() || first_flag))
             {
+                first_flag = 0;
                 fd = sock_accept(pHvObj->listen_tcp);
                 if (peer_fd > 0)
                 {
@@ -905,6 +910,7 @@ void *protocol_thread(void *arg)
                 peer_fd = fd;
                 pHvObj->peer_fd = fd;
                 ltLastHeard = GetTickCount();
+                ltLastNewClient = GetTickCount();
                 continue;
             }
             if (peer_fd > 0 && FD_ISSET(peer_fd, &read_fds))

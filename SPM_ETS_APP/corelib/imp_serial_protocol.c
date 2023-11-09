@@ -900,7 +900,7 @@ void *protocol_thread(void *arg)
     const char *dev = NULL;
     int64_t ltLastHeard = GetTickCount();
     int64_t ltLastSnd = GetTickCount();
-    int64_t ltLastNewClient = GetTickCount(); 
+    int64_t ltLastNewClient = GetTickCount();
     int first_flag = 1;
     struct timeval tv;
     int peer_fd = 0;

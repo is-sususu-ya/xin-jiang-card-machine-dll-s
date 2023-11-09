@@ -125,6 +125,9 @@ int main(int argc, char const *argv[])
             case '3':
                 SPM_AnswerPhone(hSPM, phone, 1, 0);
                 break;
+            case '4':
+                SPM_SyncTime(hSPM);
+                break;
             default:
                 break;
             }
