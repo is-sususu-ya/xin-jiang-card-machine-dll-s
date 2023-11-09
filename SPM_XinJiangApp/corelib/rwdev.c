@@ -72,8 +72,8 @@ static const char *config_def =
 	"ui_udp=192.168.1.132 # UDP更新界面方式，NUC地址\r\n"
 	"ui_url=http://192.168.1.111:9110/xj/autorun #ui控制\r\n"
 	"talk_ctrl=http://172.16.13.16:9110/xj/getAllows     # 接听控制接口 \r\n"
-	"talk_back_up=http://172.16.13.16:9110/xj/Calling?camera=0&phoneId=1001  # 上对讲\r\n"
-	"talk_back_dwn=http://172.16.13.16:9110/xj/Calling?camera=1&phoneId=1002  # 下对讲\r\n"
+	"talk_back_up=http://172.16.13.16:9110/xj/xjCalling?camera=0&phoneId=1001  # 上对讲\r\n"
+	"talk_back_dwn=http://172.16.13.16:9110/xj/xjCalling?camera=1&phoneId=1002  # 下对讲\r\n"
 	"talk_third=http://172.16.13.16:9110/xj/sipInit";
 
 
@@ -937,9 +937,9 @@ static void handle_lcd_info(int page, char *buf)
 	char gbk_buffer[1024] = {0};
 	char utf_buffer[1024] = {0};
 	sprintf(url, "%s", g_apconfig.ui_url);
-	if (!g_enable_lcd_page_remap)
-		page = page_remap(page, buf);
-	if (buf[0] == "{")
+	// if (!g_enable_lcd_page_remap)
+	// 	page = page_remap(page, buf);
+	if (strncmp(buf, "{", 1) == 0)
 		sprintf(gbk_buffer, "{\"page\":%d,\"msg\":%s}", page, buf);
 	else
 		sprintf(gbk_buffer, "{\"page\":%d,\"msg\":\"%s\"}", page, buf);

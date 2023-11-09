@@ -55,7 +55,9 @@ EXPAPI BOOL CALLTYPE SPM_GetQrCode(HANDLE h, char *buf);
 
 EXPAPI BOOL CALLTYPE SPM_InitPhone(HANDLE h, char* server, int port, char* phoneId, char* password);
 EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeout);
-EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int timeout);
+EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, int index, char *phoneId, int reply, int timeout);
+
+EXPAPI BOOL CALLTYPE SPM_GetEnvInfo(HANDLE h,int* temperature, int* humidity);
 
 // GPIO Êä³ö
 EXPAPI BOOL CALLTYPE SPM_GpioOutPut(HANDLE h, int pin, int val);

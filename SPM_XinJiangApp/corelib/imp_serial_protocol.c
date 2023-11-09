@@ -47,11 +47,15 @@ typedef struct tagAppObject
     pthread_mutex_t mutex;
 } APP_OBJECT_S;
 
+static int nhumidity = 0;
+static int ntemperature = 0;
+
 static APP_OBJECT_S theApp;
+static int g_recv_response = 0;
 #define SendLock() pthread_mutex_lock(&theApp.mutex)
 #define SendUnLock() pthread_mutex_unlock(&theApp.mutex)
  
- extern void trace_log(const char *fmt,...);
+extern void trace_log(const char *fmt,...);
 
 static UInt64 GetTickCount()
 {
@@ -261,6 +265,11 @@ int init_calling_data(char *input)
     char password[128] = {0};
     // 解析字符串 XX;XX
     sscanf(input, "%[^;];%d;%[^;];%[^;];", server, &port, phoneId, password);
+    if(port == 0)
+    {
+        trace_log("sip初始化信息为空!\r\n");
+        return -1;
+    }
     trace_log("init sip, server:[%s] port:[%d] user:[%s] password:[%s]\r\n", server, port, phoneId, password);
 
 #define MAX_TRY_COUNT 1
@@ -331,7 +340,7 @@ static int strendwith(const char *input, const char *endstr)
 static int update_hang_ctrl(char *url, const char *phoneId, int enable)
 {
     char buffer[256] = {0};
-    sprintf(buffer, "%s?phoneId=%s&hang=%s", g_apconfig.talk_ctrl, phoneId, enable ? "yes" : "no");
+    sprintf(buffer, "%s?hang=%s", g_apconfig.talk_ctrl, enable ? "yes" : "no");
     strcpy(url, buffer);
     trace_log("hang ctrl url:%s\r\n", url);
 }
@@ -405,11 +414,13 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
         id = param[1];
         ctype = param[2];
         strncpy(request, param + 3, plen - 3);
+        g_recv_response = 1;
         add_http_post_task(index, id, ctype, request);
         trace_log("POST请求地址【%d】，id【%d】, Type:【%d】, 请求参数【%s】\r\n", index, id, ctype, request);
         break;
     case 0x91:
         id = param[0];
+        g_recv_response = 1;
         printf("Recv:%s\r\n", show_hex(param, plen));
         trace_log("GET请求id【%d】,地址:【%s】\r\n", id, request);
         strncpy(request, param + 1, plen - 1);
@@ -553,7 +564,7 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
     }
     break;
     case 0x82:        
-        trace_log("接听控制.");
+        trace_log("接听控制.\r\n");
         memcpy(input, param + 4, plen - 5);
         sscanf((char *)input, "%[^;];%d", phoneId, &code);
         trace_log("phoneId:[%s] code:[%d]\r\n", phoneId, code);
@@ -570,6 +581,10 @@ static void process_command_data(APP_OBJECT_S *pHvObj, int32_t type, uint8_t cmd
             update_hang_ctrl(url, phoneId, 0);
             add_http_get_task(id, url);
         }
+        break;
+    case 0x83:
+        trace_log("环境温湿度获取.\r\n");
+        spm_report_temp_hum(ntemperature, nhumidity);
         break;
     default:
         break;
@@ -969,8 +984,6 @@ void spm_answer_talk(const char *phoneId)
     SendUnLock();
 }
 
-
-
 void spm_call_init_success(int ret)
 {
     int len;
@@ -996,6 +1009,23 @@ void spm_answer_status(const char *status)
     buf[0] = code & 0xff;
     trace_log("上报语音接入状态:[%s]\r\n", status );
     len = create_package(0, 0x87, (uint8_t *)buf, 4, buffer, sizeof(buffer));
+    SendLock();
+    if (theApp.peer_fd > 0)
+        sock_write_n_bytes(theApp.peer_fd, buffer, len);
+    if (theApp.tty_fd > 0)
+        tty_write(theApp.tty_fd, buffer, len);
+    SendUnLock();
+}
+
+void spm_report_temp_hum(int temp, int hum)
+{
+    int len;
+    char buf[32] = {0};
+    char buffer[64] = {0};
+    buf[0] = temp & 0xff;
+    buf[1] = hum & 0xff;
+    trace_log("上报环境温湿度信息[%d.%02d][%d.%02d]..\r\n", temp / 100, temp % 100, hum / 100, hum % 100);
+    len = create_package(0, 0x88, (uint8_t *)buf, 4, buffer, sizeof(buffer));
     SendLock();
     if (theApp.peer_fd > 0)
         sock_write_n_bytes(theApp.peer_fd, buffer, len);
@@ -1068,6 +1098,8 @@ static void serial_protocol_callback(int id, int ret, char *response, int size)
     char buffer[2048] = {0};
     int asize = min(950, size);
     int32_t len;
+    if(!g_recv_response)
+        return;
     buf[0] = id & 0xff;
     buf[1] = abs(ret) & 0xff;
     strncpy(buf + 2, response, asize);

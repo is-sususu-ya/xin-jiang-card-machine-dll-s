@@ -97,8 +97,7 @@ int main(int argc, char const *argv[])
     LoadFuction(SPM_GetQrCode);
     LoadFuction(SPM_AnswerPhone);
     LoadFuction(SPM_CallPhone);
-    LoadFuction(SPM_InitPhone);
-
+    LoadFuction(SPM_InitPhone); 
     if (argc >= 2)
         dev = strdup(argv[1]); 
     hSPM = SPM_Create();

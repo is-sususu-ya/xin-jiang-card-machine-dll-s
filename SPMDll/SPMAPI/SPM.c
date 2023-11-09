@@ -84,6 +84,9 @@ static int ReceivePacket(OBJECT_S *pSPM, uint8_t *msg, int size);
 static int SendPacket(OBJECT_S *pSPM, char *msg, int len);
 
 static int nWaitType = 0;
+static int nhumidity = 0;
+static int ntemperature = 0;
+
 
 #define WAIT_FLAG_PHONE_INIT_SUCCESS 1
 #define WAIT_FLAG_PHONE_INIT_FAILED 2
@@ -474,7 +477,7 @@ EXPAPI BOOL CALLTYPE SPM_CallPhone(HANDLE h, int index, char *phoneId, int timeo
 	return TRUE;
 }
 
-EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int timeout)
+EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, int index, char *phoneId, int reply, int timeout)
 {
 	OBJECT_S *pSPM = (OBJECT_S *)h;
 	if (INVLAID_OBJ(pSPM))
@@ -493,6 +496,21 @@ EXPAPI BOOL CALLTYPE SPM_AnswerPhone(HANDLE h, char *phoneId, int reply, int tim
 	ltSend = ltSend == 0 ? 5000 : ltSend;
 	ltSend = GetTickCount() + timeout < 1000 ? (timeout * 1000) : timeout;
 	// 不等了，不然收不到恢复，这里调用可能时回调处理的，所以不等了
+	return TRUE;
+}
+
+EXPAPI BOOL CALLTYPE SPM_GetEnvInfo(HANDLE h, int *temperature, int *humidity)
+{
+	uint8_t buffer[256];
+	int len = 0;
+	OBJECT_S *pSPM = (OBJECT_S *)h;
+	if (INVLAID_OBJ(pSPM))
+		return FALSE;
+	len = create_package(0, 0x83, NULL, len, buffer, sizeof(buffer));
+	SendPacket(pSPM, buffer, len);
+	usleep(100 * 1000);
+	temperature = ntemperature;
+	humidity = nhumidity;
 	return TRUE;
 }
 
@@ -761,7 +779,7 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 			ltLastHeartBeat = GetTickCount() + 5000; // 5秒一次心跳
 			SPM_HeartBeat(pSPM);
 		}
-		// 超过10秒还未收到响应，表示设备离线
+		// 超过10秒还未收到响应，表 示设备离线
 		if (GetTickCount() > (ltLastHeard + 12000))
 		{
 			MTRACE_LOG(pSPM->hLog, "长时间没收到信息，认定设备离线！\r\n");
@@ -855,6 +873,11 @@ static DWORD WINAPI ProtocolThread(HANDLE h)
 						default:
 							MTRACE_LOG(pSPM->hLog, "未定义的通话接入状态[%d].\r\n", param[0]);
 							break;
+					case 0x88:
+						MTRACE_LOG(pSPM->hLog, "获取当前温度:[%d],湿度:[%d]\r\n", param[0], param[1]);
+						ntemperature = param[0];
+						nhumidity = param[1];
+						break;
 						}
 						break; // 通知NUC端初始化成功
 					default:
