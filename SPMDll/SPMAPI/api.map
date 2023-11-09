@@ -1,0 +1,33 @@
+{
+global:
+    SPM_Create;
+    SPM_Destory;
+    SPM_IsOnline;
+    SPM_Open;
+    SPM_Close;
+    SPM_SetWinMsg;
+    SPM_SetCallBack;
+    SPM_Led_ClearAll;
+    SPM_Led_SendLineText;
+    SPM_Voice_SendText;
+    SPM_Lcd_ChangeContext;
+    SPM_SyncTime;
+    SPM_Reboot;
+    SPM_EnableQrCode;
+    SPM_GetQrCodeEx;
+    SPM_GetQrCode;
+    SPM_InitPhone;
+    SPM_CallPhone;
+    SPM_AnswerPhone;
+    SPM_GetEnvInfo;
+    SPM_GpioOutPut;
+    SPM_GpioPulse;
+    SPM_GpioPulseNegative;
+    SPM_ReadDi;
+    SPM_SetHttpProxyAddress;
+    SPM_SetHttpProxyConfig;
+    SPM_SetHttpPostProxyRequest;
+    SPM_SetHttpGetProxyRequest;
+    SPM_GetHttpProxyResponse;
+local: *;
+};

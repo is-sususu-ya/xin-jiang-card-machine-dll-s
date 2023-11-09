@@ -10,7 +10,7 @@ OBJ=$(SRC:%.c=%.o)
  
 all : $(AIM)
 $(AIM) : $(OBJ)
-	$(CC) -shared -o $@ $^ $(LFLAGS)
+	$(CC) -shared -o $@ $^ $(LFLAGS)   -Wl,--retain-symbols-file=api.sym -Wl,--version-script=api.map
 
 $(OBJ) : %.o:%.c
 	$(CC) $(CFLAGS) -c $^ -o $@

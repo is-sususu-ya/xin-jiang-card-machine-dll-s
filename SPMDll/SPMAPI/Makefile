@@ -18,7 +18,7 @@ APP:=libSPM.so
 
 all: $(APP)
 $(APP) :  $(LIBOBJ) 
-	$(CC) -shared -o $@ $^ -lpthread -lrt
+	$(CC) -shared -o $@ $^ -lpthread -lrt  -Wl,--retain-symbols-file=api.sym -Wl,--version-script=api.map
 
 $(LIBOBJ) : %.o:%.c
 	$(CC) $(APP_FLAGS) -c $^ -o $@
